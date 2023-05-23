@@ -1,14 +1,10 @@
 import type { ActionArgs } from '@remix-run/node'
 import { redirect } from '@remix-run/node'
 import { json } from '@remix-run/node'
-import { Form, Link, useActionData, useNavigation } from '@remix-run/react'
-import { ZodError, z } from 'zod'
-
-function sleep() {
-  return new Promise((resolve) => {
-    setTimeout(resolve, 3000)
-  })
-}
+import { Form, useActionData } from '@remix-run/react'
+import { z } from 'zod'
+import { PrismaClient } from '@prisma/client'
+import bcrypt from 'bcryptjs'
 
 export async function action({ request }: ActionArgs) {
   const formData = await request.formData()
@@ -17,12 +13,21 @@ export async function action({ request }: ActionArgs) {
   const email = formData.get('email')
   const password = formData.get('password')
 
-  await sleep()
-
   const CreateUserSchema = z.object({
-    name: z.string().min(3),
-    email: z.string().email(),
-    password: z.string().min(6, { message: 'Bad password dummy!' }).max(12),
+    name: z
+      .string()
+      .min(1, { message: "can't be blank" })
+      .min(2, { message: "can't be less than 2 chars" }),
+    email: z.string().min(1, { message: "can't be blank" }).email(),
+    password: z
+      .string()
+      .min(1, { message: "can't be blank" })
+      .min(6, { message: "can't be less than 6 chars" })
+      .max(20, { message: "can't be more than 20 chars" })
+      .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^\w\s]).{6,}$/, {
+        message:
+          'must contain at least one lower case, one capital case, one number and one symbol',
+      }),
   })
 
   try {
@@ -32,12 +37,19 @@ export async function action({ request }: ActionArgs) {
       password,
     })
 
-    // create a user in the db
-    console.log('🚀 ~ file: register.tsx:20 ~ action ~ validated:', validated)
+    const db = new PrismaClient()
+
+    await db.user.create({
+      data: {
+        email: validated.email,
+        name: validated.name,
+        password: await bcrypt.hash(validated.password, 10),
+      },
+    })
 
     return redirect('/')
   } catch (error) {
-    if (error instanceof ZodError) {
+    if (error instanceof z.ZodError) {
       return json({ errors: error.flatten().fieldErrors }, { status: 422 })
     }
 
@@ -47,10 +59,6 @@ export async function action({ request }: ActionArgs) {
 
 export default function Register() {
   const actionData = useActionData<typeof action>()
-  const navigation = useNavigation()
-
-  const isPending =
-    navigation.state === 'submitting' || navigation.state === 'loading'
 
   return (
     <div className="auth-page">
@@ -59,52 +67,46 @@ export default function Register() {
           <div className="col-md-6 offset-md-3 col-xs-12">
             <h1 className="text-xs-center">Sign up</h1>
             <p className="text-xs-center">
-              <Link to="/login">Have an account?</Link>
+              <a href="">Have an account?</a>
             </p>
 
-            {actionData?.errors && !isPending && (
+            {actionData && (
               <ul className="error-messages">
-                {Object.entries(actionData.errors).map(([key, message]) => (
+                {Object.entries(actionData.errors).map(([key, messages]) => (
                   <li key={key}>
-                    {key}: {String(message)}
+                    {key} {Array.isArray(messages) ? messages[0] : messages}
                   </li>
                 ))}
               </ul>
             )}
 
             <Form method="POST">
-              <fieldset disabled={isPending}>
-                <fieldset className="form-group">
-                  <input
-                    name="name"
-                    className="form-control form-control-lg"
-                    type="text"
-                    placeholder="Your Name"
-                  />
-                </fieldset>
-                <fieldset className="form-group">
-                  <input
-                    name="email"
-                    type="text"
-                    className="form-control form-control-lg"
-                    placeholder="Email"
-                  />
-                </fieldset>
-                <fieldset className="form-group">
-                  <input
-                    name="password"
-                    className="form-control form-control-lg"
-                    type="password"
-                    placeholder="Password"
-                  />
-                </fieldset>
+              <fieldset className="form-group">
+                <input
+                  className="form-control form-control-lg"
+                  type="text"
+                  placeholder="Your Name"
+                  name="name"
+                />
               </fieldset>
-              <button
-                disabled={isPending}
-                type="submit"
-                className="btn btn-lg btn-primary pull-xs-right"
-              >
-                {isPending ? 'Loading...' : 'Sign up'}
+              <fieldset className="form-group">
+                <input
+                  className="form-control form-control-lg"
+                  type="email"
+                  placeholder="Email"
+                  name="email"
+                />
+              </fieldset>
+              <fieldset className="form-group">
+                <input
+                  className="form-control form-control-lg"
+                  type="password"
+                  placeholder="Password"
+                  name="password"
+                />
+              </fieldset>
+              <button className="btn btn-lg btn-primary pull-xs-right">
+                Sign up
               </button>
             </Form>
           </div>

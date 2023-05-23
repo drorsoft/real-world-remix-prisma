@@ -1,6 +1,5 @@
 import type { LinksFunction } from '@remix-run/node'
 import {
-  Link,
   Links,
   LiveReload,
   Meta,
@@ -42,9 +41,9 @@ export default function App() {
       <body>
         <nav className="navbar navbar-light">
           <div className="container">
-            <Link className="navbar-brand" to="/">
+            <a className="navbar-brand" href="index.html">
               conduit
-            </Link>
+            </a>
             <ul className="nav navbar-nav pull-xs-right">
               <li className="nav-item">
                 <NavLink
