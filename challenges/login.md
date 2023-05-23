@@ -230,7 +230,7 @@ export async function action({ request }: ActionArgs) {
     2.  call the `useActionData` hook to get the `action` response data.
     3.  loop over the errors and display them
 
-```typescript
+```tsx
 import { Form, Link, useActionData } from '@remix-run/react'
 
 export default function Login() {
