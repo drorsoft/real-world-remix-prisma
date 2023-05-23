@@ -227,9 +227,12 @@ export async function action({ request }: ActionArgs) {
 
 12. Now we can finally submit this form using Remix and get some validation feedback
     1.  change the `form` to a `Form` from `@remix-run/react` and set `method="POST"`.
-    2.  call the `useActionData` hood to get the `action` response data.
+    2.  call the `useActionData` hook to get the `action` response data.
+    3.  loop over the errors and display them
 
 ```typescript
+import { Form, Link, useActionData } from '@remix-run/react'
+
 export default function Login() {
   const actionData = useActionData<typeof action>()
 
