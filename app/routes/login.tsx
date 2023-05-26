@@ -5,6 +5,7 @@ import { json } from '@remix-run/node'
 import { Form, Link, useActionData } from '@remix-run/react'
 import { z } from 'zod'
 import bcrypt from 'bcryptjs'
+import { commitSession, getSession } from '~/lib/session.server'
 
 export async function action({ request }: ActionArgs) {
   const formData = await request.formData()
@@ -16,6 +17,8 @@ export async function action({ request }: ActionArgs) {
     email: z.string().min(1, { message: "can't be blank" }).email(),
     password: z.string().min(1, { message: "can't be blank" }),
   })
+
+  const session = await getSession(request.headers.get('Cookie'))
 
   try {
     const validated = await LoginUserSchema.parseAsync({ email, password })
@@ -48,13 +51,31 @@ export async function action({ request }: ActionArgs) {
       )
     }
 
-    return redirect('/')
+    session.set('userId', user.id)
+
+    session.flash('success', `Welcome back ${user.name}!`)
+
+    return redirect('/', {
+      headers: {
+        'Set-Cookie': await commitSession(session),
+      },
+    })
   } catch (error) {
     if (error instanceof z.ZodError) {
       return json({ errors: error.flatten().fieldErrors }, { status: 422 })
     }
 
-    return json({ errors: {} }, { status: 400 })
+    session.flash('error', 'Login failed')
+
+    return json(
+      { errors: {} },
+      {
+        status: 400,
+        headers: {
+          'Set-Cookie': await commitSession(session),
+        },
+      }
+    )
   }
 }
 

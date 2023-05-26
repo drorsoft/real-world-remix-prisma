@@ -1,4 +1,4 @@
-## Login route challenge
+## Login route lesson
 
 Now that we have the register route all done and we have our user in the DB, it's time to add the login route as well.
 

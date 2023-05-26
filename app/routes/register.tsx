@@ -1,10 +1,11 @@
 import type { ActionArgs } from '@remix-run/node'
 import { redirect } from '@remix-run/node'
 import { json } from '@remix-run/node'
-import { Form, useActionData } from '@remix-run/react'
+import { Form, Link, useActionData } from '@remix-run/react'
 import { z } from 'zod'
 import { PrismaClient } from '@prisma/client'
 import bcrypt from 'bcryptjs'
+import { commitSession, getSession } from '~/lib/session.server'
 
 export async function action({ request }: ActionArgs) {
   const formData = await request.formData()
@@ -30,6 +31,8 @@ export async function action({ request }: ActionArgs) {
       }),
   })
 
+  const session = await getSession(request.headers.get('Cookie'))
+
   try {
     const validated = await CreateUserSchema.parseAsync({
       name,
@@ -39,7 +42,7 @@ export async function action({ request }: ActionArgs) {
 
     const db = new PrismaClient()
 
-    await db.user.create({
+    const user = await db.user.create({
       data: {
         email: validated.email,
         name: validated.name,
@@ -47,13 +50,34 @@ export async function action({ request }: ActionArgs) {
       },
     })
 
-    return redirect('/')
+    session.set('userId', user.id)
+
+    session.flash(
+      'success',
+      'You are now successfully registered! Welcome to Conduit'
+    )
+
+    return redirect('/', {
+      headers: {
+        'Set-Cookie': await commitSession(session),
+      },
+    })
   } catch (error) {
     if (error instanceof z.ZodError) {
       return json({ errors: error.flatten().fieldErrors }, { status: 422 })
     }
 
-    return json({ errors: {} }, { status: 400 })
+    session.flash('error', 'Registration failed')
+
+    return json(
+      { errors: {} },
+      {
+        status: 400,
+        headers: {
+          'Set-Cookie': await commitSession(session),
+        },
+      }
+    )
   }
 }
 
@@ -67,7 +91,7 @@ export default function Register() {
           <div className="col-md-6 offset-md-3 col-xs-12">
             <h1 className="text-xs-center">Sign up</h1>
             <p className="text-xs-center">
-              <a href="">Have an account?</a>
+              <Link to="/login">Have an account?</Link>
             </p>
 
             {actionData && (
