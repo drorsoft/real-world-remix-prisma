@@ -1,11 +1,15 @@
 import type { ActionArgs } from '@remix-run/node'
-import { redirect } from '@remix-run/node'
-import { json } from '@remix-run/node'
 import { Form, Link, useActionData } from '@remix-run/react'
-import { z } from 'zod'
-import { PrismaClient } from '@prisma/client'
-import bcrypt from 'bcryptjs'
-import { commitSession, getSession } from '~/lib/session.server'
+import { ErrorMessages } from '~/components/error-messages'
+import {
+  BaseUserSchema,
+  nonEmptyStringSchema,
+  userPasswordSchema,
+  validate,
+} from '~/utils/validation.server'
+import { db } from '~/lib/db.server'
+import { login } from '~/lib/auth.server'
+import { actionFailed } from '~/lib/http.server'
 
 export async function action({ request }: ActionArgs) {
   const formData = await request.formData()
@@ -14,70 +18,35 @@ export async function action({ request }: ActionArgs) {
   const email = formData.get('email')
   const password = formData.get('password')
 
-  const CreateUserSchema = z.object({
-    name: z
-      .string()
-      .min(1, { message: "can't be blank" })
-      .min(2, { message: "can't be less than 2 chars" }),
-    email: z.string().min(1, { message: "can't be blank" }).email(),
-    password: z
-      .string()
-      .min(1, { message: "can't be blank" })
-      .min(6, { message: "can't be less than 6 chars" })
-      .max(20, { message: "can't be more than 20 chars" })
-      .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^\w\s]).{6,}$/, {
-        message:
-          'must contain at least one lower case, one capital case, one number and one symbol',
-      }),
+  const CreateUserSchema = BaseUserSchema.extend({
+    password: userPasswordSchema.and(nonEmptyStringSchema),
   })
 
-  const session = await getSession(request.headers.get('Cookie'))
-
   try {
-    const validated = await CreateUserSchema.parseAsync({
-      name,
-      email,
-      password,
-    })
-
-    const db = new PrismaClient()
+    const validated = await validate(
+      {
+        name,
+        email,
+        password,
+      },
+      CreateUserSchema
+    )
 
     const user = await db.user.create({
       data: {
         email: validated.email,
         name: validated.name,
-        password: await bcrypt.hash(validated.password, 10),
+        password: validated.password,
       },
     })
 
-    session.set('userId', user.id)
-
-    session.flash(
-      'success',
-      'You are now successfully registered! Welcome to Conduit'
-    )
-
-    return redirect('/', {
-      headers: {
-        'Set-Cookie': await commitSession(session),
-      },
+    return login({
+      request,
+      user,
+      successMessage: 'Registration successful',
     })
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return json({ errors: error.flatten().fieldErrors }, { status: 422 })
-    }
-
-    session.flash('error', 'Registration failed')
-
-    return json(
-      { errors: {} },
-      {
-        status: 400,
-        headers: {
-          'Set-Cookie': await commitSession(session),
-        },
-      }
-    )
+    return actionFailed(error)
   }
 }
 
@@ -93,17 +62,7 @@ export default function Register() {
             <p className="text-xs-center">
               <Link to="/login">Have an account?</Link>
             </p>
-
-            {actionData && (
-              <ul className="error-messages">
-                {Object.entries(actionData.errors).map(([key, messages]) => (
-                  <li key={key}>
-                    {key} {Array.isArray(messages) ? messages[0] : messages}
-                  </li>
-                ))}
-              </ul>
-            )}
-
+            {actionData && <ErrorMessages errors={actionData.errors} />}
             <Form method="POST">
               <fieldset className="form-group">
                 <input

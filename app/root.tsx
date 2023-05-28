@@ -1,5 +1,6 @@
 import type { LinksFunction, LoaderArgs } from '@remix-run/node'
 import { json } from '@remix-run/node'
+import type { NavLinkProps } from '@remix-run/react'
 import {
   Links,
   LiveReload,
@@ -9,11 +10,14 @@ import {
   Scripts,
   ScrollRestoration,
   useLoaderData,
+  useLocation,
+  useNavigate,
 } from '@remix-run/react'
 import clsx from 'clsx'
-import { commitSession, getSession } from './lib/session.server'
-import { PrismaClient } from '@prisma/client'
+import { getSession } from './lib/session.server'
 import React from 'react'
+import { currentUser } from './lib/auth.server'
+import { pick } from 'lodash'
 
 export const links: LinksFunction = () => {
   return [
@@ -35,47 +39,35 @@ export const links: LinksFunction = () => {
 }
 
 export async function loader({ request }: LoaderArgs) {
-  const session = await getSession(request.headers.get('Cookie'))
+  const session = await getSession(request)
 
-  const userId = session.get('userId')
   const successMessage = session.get('success')
   const errorMessage = session.get('error')
 
-  let userDTO = null
+  const user = await currentUser(request)
 
-  if (userId) {
-    const db = new PrismaClient()
-
-    const user = await db.user.findUnique({ where: { id: userId } })
-
-    userDTO = {
-      id: user?.id,
-      name: user?.name,
-    }
-  }
-
-  return json(
-    {
-      errorMessage,
-      successMessage,
-      user: userDTO,
-    },
-    { headers: { 'Set-Cookie': await commitSession(session) } }
-  )
+  return json({
+    errorMessage,
+    successMessage,
+    user: pick(user, ['id', 'name', 'avatar']),
+  })
 }
 
 export default function App() {
   const loaderData = useLoaderData<typeof loader>()
-  const [isFlashMessageVisible, setIsFlashMessageVisible] =
-    React.useState(false)
+  const location = useLocation()
+  const navigate = useNavigate()
 
   React.useEffect(() => {
     if (loaderData.successMessage || loaderData.errorMessage) {
-      setIsFlashMessageVisible(true)
-
-      setTimeout(() => setIsFlashMessageVisible(false), 3000)
+      setTimeout(() => navigate(location.pathname), 3000)
     }
-  }, [loaderData.errorMessage, loaderData.successMessage])
+  }, [
+    loaderData.errorMessage,
+    loaderData.successMessage,
+    location.pathname,
+    navigate,
+  ])
 
   return (
     <html lang="en">
@@ -93,60 +85,38 @@ export default function App() {
             </a>
             <ul className="nav navbar-nav pull-xs-right">
               <li className="nav-item">
-                <NavLink
-                  className={({ isActive }) =>
-                    clsx('nav-link', isActive && 'active')
-                  }
-                  to="/"
-                >
-                  Home
-                </NavLink>
+                <NavbarLink to="/">Home</NavbarLink>
               </li>
-              <li className="nav-item">
-                <a className="nav-link" href="">
-                  {' '}
-                  <i className="ion-compose"></i>&nbsp;New Article{' '}
-                </a>
-              </li>
-              {loaderData.user?.id ? (
-                <li className="nav-item">
-                  <a className="nav-link" href="#/@romansandler">
-                    <img
-                      className="user-pic"
-                      src="https://api.realworld.io/images/smiley-cyrus.jpeg"
-                      alt=""
-                    />
-                    {loaderData.user.name}
-                  </a>
-                </li>
+              {loaderData.user.id ? (
+                <>
+                  <li className="nav-item">
+                    <NavbarLink to="/settings">Settings</NavbarLink>
+                  </li>
+                  <li className="nav-item">
+                    <a className="nav-link" href="#/@romansandler">
+                      <img
+                        className="user-pic"
+                        src={loaderData.user.avatar}
+                        alt=""
+                      />
+                      {loaderData.user.name}
+                    </a>
+                  </li>
+                </>
               ) : (
                 <>
                   <li className="nav-item">
-                    <NavLink
-                      className={({ isActive }) =>
-                        clsx('nav-link', isActive && 'active')
-                      }
-                      to="/login"
-                    >
-                      Sign in
-                    </NavLink>
+                    <NavbarLink to="/login">Sign in</NavbarLink>
                   </li>
                   <li className="nav-item">
-                    <NavLink
-                      className={({ isActive }) =>
-                        clsx('nav-link', isActive && 'active')
-                      }
-                      to="/register"
-                    >
-                      Sign up
-                    </NavLink>
+                    <NavbarLink to="/register">Sign up</NavbarLink>
                   </li>
                 </>
               )}
             </ul>
           </div>
         </nav>
-        {isFlashMessageVisible && (
+        {(loaderData.successMessage || loaderData.errorMessage) && (
           <div
             className={clsx('alert', {
               'alert-success': loaderData.successMessage,
@@ -176,5 +146,16 @@ export default function App() {
         <LiveReload />
       </body>
     </html>
+  )
+}
+
+function NavbarLink({ children, ...props }: NavLinkProps) {
+  return (
+    <NavLink
+      className={({ isActive }) => clsx('nav-link', isActive && 'active')}
+      {...props}
+    >
+      {children}
+    </NavLink>
   )
 }

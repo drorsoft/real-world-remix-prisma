@@ -1,11 +1,10 @@
-import { PrismaClient } from '@prisma/client'
 import type { ActionArgs } from '@remix-run/node'
-import { redirect } from '@remix-run/node'
-import { json } from '@remix-run/node'
 import { Form, Link, useActionData } from '@remix-run/react'
 import { z } from 'zod'
-import bcrypt from 'bcryptjs'
-import { commitSession, getSession } from '~/lib/session.server'
+import { authenticate, login } from '~/lib/auth.server'
+import { ErrorMessages } from '~/components/error-messages'
+import { nonEmptyStringSchema, validate } from '~/utils/validation.server'
+import { actionFailed } from '~/lib/http.server'
 
 export async function action({ request }: ActionArgs) {
   const formData = await request.formData()
@@ -14,68 +13,22 @@ export async function action({ request }: ActionArgs) {
   const password = formData.get('password')
 
   const LoginUserSchema = z.object({
-    email: z.string().min(1, { message: "can't be blank" }).email(),
-    password: z.string().min(1, { message: "can't be blank" }),
+    email: nonEmptyStringSchema.email(),
+    password: nonEmptyStringSchema,
   })
 
-  const session = await getSession(request.headers.get('Cookie'))
-
   try {
-    const validated = await LoginUserSchema.parseAsync({ email, password })
+    const validated = await validate({ email, password }, LoginUserSchema)
 
-    const db = new PrismaClient()
+    const user = await authenticate(validated.email, validated.password)
 
-    const user = await db.user.findFirst({ where: { email: validated.email } })
-
-    if (!user) {
-      return json(
-        {
-          errors: {
-            'email or password': ['is invalid'],
-          },
-        },
-        { status: 422 }
-      )
-    }
-
-    const match = await bcrypt.compare(validated.password, user.password)
-
-    if (!match) {
-      return json(
-        {
-          errors: {
-            'email or password': ['is invalid'],
-          },
-        },
-        { status: 422 }
-      )
-    }
-
-    session.set('userId', user.id)
-
-    session.flash('success', `Welcome back ${user.name}!`)
-
-    return redirect('/', {
-      headers: {
-        'Set-Cookie': await commitSession(session),
-      },
+    return login({
+      request,
+      user,
+      successMessage: `Welcome back ${user.name}!`,
     })
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return json({ errors: error.flatten().fieldErrors }, { status: 422 })
-    }
-
-    session.flash('error', 'Login failed')
-
-    return json(
-      { errors: {} },
-      {
-        status: 400,
-        headers: {
-          'Set-Cookie': await commitSession(session),
-        },
-      }
-    )
+    return actionFailed(error)
   }
 }
 
@@ -91,15 +44,7 @@ export default function Login() {
             <p className="text-xs-center">
               <Link to="/register">Need an account?</Link>
             </p>
-            {actionData?.errors && (
-              <ul className="error-messages">
-                {Object.entries(actionData.errors).map(([key, messages]) => (
-                  <li key={key}>
-                    {key} {Array.isArray(messages) ? messages[0] : messages}
-                  </li>
-                ))}
-              </ul>
-            )}
+            {actionData && <ErrorMessages errors={actionData.errors} />}
             <Form method="POST">
               <fieldset className="form-group">
                 <input
