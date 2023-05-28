@@ -3,7 +3,7 @@ import { Form, Link, useActionData } from '@remix-run/react'
 import { z } from 'zod'
 import { authenticate, login } from '~/lib/auth.server'
 import { ErrorMessages } from '~/components/error-messages'
-import { nonEmptyStringSchema, validate } from '~/utils/validation.server'
+import { nonEmptyStringSchema, validate } from '~/lib/validation.server'
 import { actionFailed } from '~/lib/http.server'
 
 export async function action({ request }: ActionArgs) {

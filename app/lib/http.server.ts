@@ -1,4 +1,4 @@
-import { ValidationError } from '~/utils/validation.server'
+import { ValidationError } from '~/lib/validation.server'
 import { AuthenticationError } from './auth.server'
 import { serverError, unauthorized, unprocessableEntity } from 'remix-utils'
 import { json } from '@remix-run/node'

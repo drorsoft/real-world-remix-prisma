@@ -10,7 +10,7 @@ import {
   BaseUserSchema,
   userPasswordSchema,
   validate,
-} from '~/utils/validation.server'
+} from '~/lib/validation.server'
 
 export async function loader({ request }: LoaderArgs) {
   await requireLogin(request)

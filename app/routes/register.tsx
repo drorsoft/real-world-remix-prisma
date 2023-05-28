@@ -6,7 +6,7 @@ import {
   nonEmptyStringSchema,
   userPasswordSchema,
   validate,
-} from '~/utils/validation.server'
+} from '~/lib/validation.server'
 import { db } from '~/lib/db.server'
 import { login } from '~/lib/auth.server'
 import { actionFailed } from '~/lib/http.server'
