@@ -1,13 +1,12 @@
 import { createSessionStorage } from '@remix-run/node'
 import { db } from './db.server'
-import { isEqual } from 'lodash'
 import dayjs from 'dayjs'
 
 type SessionData = {
   userId: number
 }
 
-type SessionFlashData = {
+export type SessionFlashData = {
   error: string
   success: string
 }
@@ -43,30 +42,13 @@ export const sessionStorage = createSessionStorage<
     })
 
     if (session) {
-      // check if the session has expired
       if (dayjs(session.expiresAt).isBefore(dayjs())) {
         await db.session.delete({ where: { id: Number(id) } })
 
         return null
       }
 
-      const payload = JSON.parse(session.payload)
-      const payloadClone = structuredClone(payload)
-
-      for (var key in payloadClone) {
-        if (key.startsWith('__flash')) {
-          delete payloadClone[key]
-        }
-      }
-
-      if (!isEqual(payload, payloadClone)) {
-        await db.session.update({
-          where: { id: Number(id) },
-          data: { payload: JSON.stringify(payloadClone) },
-        })
-      }
-
-      return payload
+      return JSON.parse(session.payload)
     }
 
     return null
