@@ -1,10 +1,17 @@
 import bcrypt from 'bcryptjs'
 import { db } from './db.server'
 import { commitSession, destroySession, getSession } from './session.server'
-import type { User } from '@prisma/client'
+import type { Prisma, User } from '@prisma/client'
 import { redirect } from '@remix-run/node'
-
-export const LOGIN_URL = '/login'
+import {
+  nonEmptyStringSchema,
+  userEmailSchema,
+  userNameSchema,
+  userPasswordSchema,
+  validate,
+} from './validation.server'
+import { z } from 'zod'
+import { redirectHome, redirectToLogin } from './http.server'
 
 export class AuthenticationError extends Error {
   constructor(
@@ -15,8 +22,18 @@ export class AuthenticationError extends Error {
   }
 }
 
-export async function authenticate(username: string, password: string) {
-  const user = await db.user.findFirst({ where: { email: username } })
+export async function authenticate(
+  email: FormDataEntryValue | null,
+  password: FormDataEntryValue | null
+) {
+  const LoginUserSchema = z.object({
+    email: userEmailSchema,
+    password: userPasswordSchema,
+  })
+
+  const validated = await validate({ email, password }, LoginUserSchema)
+
+  const user = await db.user.findFirst({ where: { email: validated.email } })
 
   if (!user) {
     throw new AuthenticationError({
@@ -24,7 +41,7 @@ export async function authenticate(username: string, password: string) {
     })
   }
 
-  const match = await bcrypt.compare(password, user.password)
+  const match = await bcrypt.compare(validated.password, user.password)
 
   if (!match) {
     throw new AuthenticationError({
@@ -45,14 +62,51 @@ export async function currentUserId(request: Request) {
   return userId
 }
 
-export async function currentUser(request: Request) {
+export async function createUser({
+  name,
+  email,
+  password,
+}: {
+  name: FormDataEntryValue | null
+  email: FormDataEntryValue | null
+  password: FormDataEntryValue | null
+}) {
+  const CreateUserSchema = z.object({
+    password: userPasswordSchema.and(nonEmptyStringSchema),
+    email: userEmailSchema,
+    name: userNameSchema,
+  })
+
+  const validated = await validate(
+    {
+      name,
+      email,
+      password,
+    },
+    CreateUserSchema
+  )
+
+  return db.user.create({
+    data: {
+      email: validated.email,
+      name: validated.name,
+      password: validated.password,
+    },
+  })
+}
+
+export async function currentUser<T extends Prisma.UserSelectScalar>(
+  request: Request,
+  select?: T
+) {
   const userId = await currentUserId(request)
 
   if (!userId) return null
 
-  const user = await db.user.findUnique({ where: { id: userId } })
-
-  return user
+  return db.user.findUnique({
+    where: { id: userId },
+    select,
+  })
 }
 
 export async function login({
@@ -82,7 +136,7 @@ export async function login({
 export async function requireLogin(request: Request) {
   const userId = await currentUserId(request)
 
-  if (!userId) throw redirect(LOGIN_URL)
+  if (!userId) throw redirectToLogin()
 
   return userId
 }
@@ -90,7 +144,7 @@ export async function requireLogin(request: Request) {
 export async function logout(request: Request) {
   const session = await getSession(request)
 
-  return redirect('/', {
+  return redirectHome({
     headers: {
       'Set-Cookie': await destroySession(session),
     },

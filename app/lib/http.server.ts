@@ -1,58 +1,37 @@
 import { ValidationError } from '~/lib/validation.server'
 import { AuthenticationError } from './auth.server'
 import { serverError, unauthorized, unprocessableEntity } from 'remix-utils'
-import { json } from '@remix-run/node'
+import type { ResponseInit, TypedResponse } from '@remix-run/node'
+import { redirect } from '@remix-run/node'
 
-export function actionFailed(error: unknown) {
+export interface ExceptionHandlerResponseBody {
+  errors: Record<string, string[] | undefined>
+  message?: string
+}
+
+export function handleExceptions(
+  error: unknown
+): TypedResponse<ExceptionHandlerResponseBody> {
   if (error instanceof ValidationError) {
-    return unprocessableEntity(
-      new ActionResponseBody({ errors: error.errors, success: false })
-    )
+    return unprocessableEntity({
+      errors: error.errors,
+    })
   }
 
   if (error instanceof AuthenticationError) {
-    return unauthorized(
-      new ActionResponseBody({ errors: error.errors, success: false })
-    )
+    return unauthorized({ errors: error.errors })
   }
 
-  return serverError(
-    new ActionResponseBody({
-      message: 'Something went wrong',
-      success: false,
-    })
-  )
+  return serverError({
+    message: 'Something went wrong',
+    errors: {},
+  })
 }
 
-export function actionSucceeded(data?: unknown) {
-  return json(
-    new ActionResponseBody({
-      success: true,
-      data,
-    })
-  )
+export function redirectHome(init?: ResponseInit) {
+  return redirect('/', init)
 }
 
-class ActionResponseBody {
-  public errors
-  public message
-  public success
-  public data
-
-  constructor({
-    message = '',
-    success = true,
-    errors = {},
-    data = {},
-  }: {
-    errors?: Record<string, string[] | undefined>
-    message?: string
-    success?: boolean
-    data?: unknown
-  }) {
-    this.errors = errors
-    this.message = message
-    this.success = success
-    this.data = data
-  }
+export function redirectToLogin(init?: ResponseInit) {
+  return redirect('/login', init)
 }

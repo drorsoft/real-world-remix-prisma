@@ -1,13 +1,19 @@
+import type { Prisma } from '@prisma/client'
 import type { ActionArgs, LoaderArgs } from '@remix-run/node'
+import { redirect } from '@remix-run/node'
 import { json } from '@remix-run/node'
 import { Form, useActionData, useLoaderData } from '@remix-run/react'
-import { pick } from 'lodash'
+import { jsonHash } from 'remix-utils'
+import { z } from 'zod'
 import { ErrorMessages } from '~/components/error-messages'
 import { currentUser, requireLogin } from '~/lib/auth.server'
 import { db } from '~/lib/db.server'
-import { actionFailed, actionSucceeded } from '~/lib/http.server'
+import { handleExceptions, redirectHome } from '~/lib/http.server'
+import { addMessage } from '~/lib/messages.server'
 import {
-  BaseUserSchema,
+  nonEmptyStringSchema,
+  userEmailSchema,
+  userNameSchema,
   userPasswordSchema,
   validate,
 } from '~/lib/validation.server'
@@ -15,10 +21,15 @@ import {
 export async function loader({ request }: LoaderArgs) {
   await requireLogin(request)
 
-  const user = await currentUser(request)
-
-  return json({
-    user: pick(user, ['name', 'bio', 'email', 'avatar']),
+  return jsonHash({
+    user() {
+      return currentUser(request, {
+        avatar: true,
+        name: true,
+        bio: true,
+        email: true,
+      })
+    },
   })
 }
 
@@ -30,11 +41,15 @@ export async function action({ request }: ActionArgs) {
   const email = formData.get('email')
   const name = formData.get('name')
   const bio = formData.get('bio')
-  const password = formData.get('password')?.toString()
+  const password = formData.get('password')
   const avatar = formData.get('avatar')
 
-  const UpdateUserSchema = BaseUserSchema.extend({
-    password: userPasswordSchema.optional(),
+  const UpdateUserSchema = z.object({
+    name: userNameSchema,
+    bio: z.string().optional(),
+    email: userEmailSchema,
+    avatar: nonEmptyStringSchema.url().optional(),
+    password: userPasswordSchema.or(z.literal('')),
   })
 
   try {
@@ -49,16 +64,29 @@ export async function action({ request }: ActionArgs) {
       UpdateUserSchema
     )
 
+    const data: Prisma.UserUpdateInput = {
+      avatar: validated.avatar,
+      bio: validated.bio,
+      email: validated.email,
+      name: validated.name,
+    }
+
+    if (validated.password) {
+      data.password = validated.password
+    }
+
     await db.user.update({
       where: {
         id: userId,
       },
-      data: validated,
+      data,
     })
 
-    return actionSucceeded()
+    await addMessage(request, 'success', 'Settings updated successfully')
+
+    return redirectHome()
   } catch (error) {
-    return actionFailed(error)
+    return handleExceptions(error)
   }
 }
 
@@ -81,7 +109,7 @@ export default function Settings() {
                     type="text"
                     placeholder="URL of profile picture"
                     name="avatar"
-                    defaultValue={loaderData.user.avatar}
+                    defaultValue={loaderData.user?.avatar}
                   />
                 </fieldset>
                 <fieldset className="form-group">
@@ -90,7 +118,7 @@ export default function Settings() {
                     type="text"
                     placeholder="Your Name"
                     name="name"
-                    defaultValue={loaderData.user.name}
+                    defaultValue={loaderData.user?.name}
                   />
                 </fieldset>
                 <fieldset className="form-group">
@@ -99,7 +127,7 @@ export default function Settings() {
                     rows={8}
                     placeholder="Short bio about you"
                     name="bio"
-                    defaultValue={loaderData.user.bio!}
+                    defaultValue={loaderData.user?.bio || ''}
                   ></textarea>
                 </fieldset>
                 <fieldset className="form-group">
@@ -108,7 +136,7 @@ export default function Settings() {
                     type="text"
                     placeholder="Email"
                     name="email"
-                    defaultValue={loaderData.user.email}
+                    defaultValue={loaderData.user?.email}
                   />
                 </fieldset>
                 <fieldset className="form-group">

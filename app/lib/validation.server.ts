@@ -29,11 +29,10 @@ export const nonEmptyStringSchema = z
   .string()
   .min(1, { message: "can't be blank" })
 
-export const BaseUserSchema = z.object({
-  name: nonEmptyStringSchema.min(2, { message: "can't be less than 2 chars" }),
-  bio: z.string().optional(),
-  email: nonEmptyStringSchema.email(),
-  avatar: nonEmptyStringSchema.url().optional(),
+export const userEmailSchema = nonEmptyStringSchema.email()
+
+export const userNameSchema = nonEmptyStringSchema.min(2, {
+  message: "can't be less than 2 chars",
 })
 
 export const userPasswordSchema = z

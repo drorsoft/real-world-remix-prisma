@@ -1,15 +1,8 @@
 import type { ActionArgs } from '@remix-run/node'
 import { Form, Link, useActionData } from '@remix-run/react'
 import { ErrorMessages } from '~/components/error-messages'
-import {
-  BaseUserSchema,
-  nonEmptyStringSchema,
-  userPasswordSchema,
-  validate,
-} from '~/lib/validation.server'
-import { db } from '~/lib/db.server'
-import { login } from '~/lib/auth.server'
-import { actionFailed } from '~/lib/http.server'
+import { createUser, login } from '~/lib/auth.server'
+import { handleExceptions } from '~/lib/http.server'
 
 export async function action({ request }: ActionArgs) {
   const formData = await request.formData()
@@ -18,26 +11,11 @@ export async function action({ request }: ActionArgs) {
   const email = formData.get('email')
   const password = formData.get('password')
 
-  const CreateUserSchema = BaseUserSchema.extend({
-    password: userPasswordSchema.and(nonEmptyStringSchema),
-  })
-
   try {
-    const validated = await validate(
-      {
-        name,
-        email,
-        password,
-      },
-      CreateUserSchema
-    )
-
-    const user = await db.user.create({
-      data: {
-        email: validated.email,
-        name: validated.name,
-        password: validated.password,
-      },
+    const user = await createUser({
+      email,
+      name,
+      password,
     })
 
     return login({
@@ -46,7 +24,7 @@ export async function action({ request }: ActionArgs) {
       successMessage: 'Registration successful',
     })
   } catch (error) {
-    return actionFailed(error)
+    return handleExceptions(error)
   }
 }
 

@@ -1,5 +1,4 @@
 import type { LinksFunction, LoaderArgs } from '@remix-run/node'
-import { json } from '@remix-run/node'
 import type { NavLinkProps } from '@remix-run/react'
 import {
   Links,
@@ -14,10 +13,10 @@ import {
   useNavigate,
 } from '@remix-run/react'
 import clsx from 'clsx'
-import { getSession } from './lib/session.server'
 import React from 'react'
 import { currentUser } from './lib/auth.server'
-import { pick } from 'lodash'
+import { jsonHash } from 'remix-utils'
+import { getMessages } from './lib/messages.server'
 
 export const links: LinksFunction = () => {
   return [
@@ -39,17 +38,17 @@ export const links: LinksFunction = () => {
 }
 
 export async function loader({ request }: LoaderArgs) {
-  const session = await getSession(request)
-
-  const successMessage = session.get('success')
-  const errorMessage = session.get('error')
-
-  const user = await currentUser(request)
-
-  return json({
-    errorMessage,
-    successMessage,
-    user: pick(user, ['id', 'name', 'avatar']),
+  return jsonHash({
+    messages() {
+      return getMessages(request)
+    },
+    user() {
+      return currentUser(request, {
+        id: true,
+        name: true,
+        avatar: true,
+      })
+    },
   })
 }
 
@@ -59,15 +58,10 @@ export default function App() {
   const navigate = useNavigate()
 
   React.useEffect(() => {
-    if (loaderData.successMessage || loaderData.errorMessage) {
+    if (loaderData.messages) {
       setTimeout(() => navigate(location.pathname), 3000)
     }
-  }, [
-    loaderData.errorMessage,
-    loaderData.successMessage,
-    location.pathname,
-    navigate,
-  ])
+  }, [loaderData.messages, location.pathname, navigate])
 
   return (
     <html lang="en">
@@ -87,7 +81,7 @@ export default function App() {
               <li className="nav-item">
                 <NavbarLink to="/">Home</NavbarLink>
               </li>
-              {loaderData.user.id ? (
+              {loaderData.user ? (
                 <>
                   <li className="nav-item">
                     <NavbarLink to="/settings">Settings</NavbarLink>
@@ -116,16 +110,16 @@ export default function App() {
             </ul>
           </div>
         </nav>
-        {(loaderData.successMessage || loaderData.errorMessage) && (
+        {loaderData.messages && (
           <div
             className={clsx('alert', {
-              'alert-success': loaderData.successMessage,
-              'alert-danger': loaderData.errorMessage,
+              'alert-success': loaderData.messages.success,
+              'alert-danger': loaderData.messages.error,
             })}
             role="alert"
             style={{ margin: 0, borderRadius: 0 }}
           >
-            {loaderData.successMessage || loaderData.errorMessage}
+            {loaderData.messages.success || loaderData.messages.error}
           </div>
         )}
         <Outlet />

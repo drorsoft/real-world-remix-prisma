@@ -1,10 +1,8 @@
 import type { ActionArgs } from '@remix-run/node'
 import { Form, Link, useActionData } from '@remix-run/react'
-import { z } from 'zod'
 import { authenticate, login } from '~/lib/auth.server'
 import { ErrorMessages } from '~/components/error-messages'
-import { nonEmptyStringSchema, validate } from '~/lib/validation.server'
-import { actionFailed } from '~/lib/http.server'
+import { handleExceptions } from '~/lib/http.server'
 
 export async function action({ request }: ActionArgs) {
   const formData = await request.formData()
@@ -12,15 +10,8 @@ export async function action({ request }: ActionArgs) {
   const email = formData.get('email')
   const password = formData.get('password')
 
-  const LoginUserSchema = z.object({
-    email: nonEmptyStringSchema.email(),
-    password: nonEmptyStringSchema,
-  })
-
   try {
-    const validated = await validate({ email, password }, LoginUserSchema)
-
-    const user = await authenticate(validated.email, validated.password)
+    const user = await authenticate(email, password)
 
     return login({
       request,
@@ -28,7 +19,7 @@ export async function action({ request }: ActionArgs) {
       successMessage: `Welcome back ${user.name}!`,
     })
   } catch (error) {
-    return actionFailed(error)
+    return handleExceptions(error)
   }
 }
 
