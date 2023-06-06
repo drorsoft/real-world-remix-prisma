@@ -16,7 +16,7 @@ import { redirectHome, redirectToLogin } from './http.server'
 export class AuthenticationError extends Error {
   constructor(
     public errors: Record<string, string[] | undefined>,
-    public message: string = ''
+    public message: string = 'AuthenticationError'
   ) {
     super(message)
   }
