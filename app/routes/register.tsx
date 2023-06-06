@@ -3,6 +3,7 @@ import { Form, Link, useActionData } from '@remix-run/react'
 import { ErrorMessages } from '~/components/error-messages'
 import { createUser, login } from '~/lib/auth.server'
 import { handleExceptions } from '~/lib/http.server'
+import { addMessage } from '~/lib/messages.server'
 
 export async function action({ request }: ActionArgs) {
   const formData = await request.formData()
@@ -18,11 +19,9 @@ export async function action({ request }: ActionArgs) {
       password,
     })
 
-    return login({
-      request,
-      user,
-      successMessage: 'Registration successful',
-    })
+    await addMessage(request, 'success', 'Registration successful')
+
+    return login(request, user)
   } catch (error) {
     return handleExceptions(error)
   }

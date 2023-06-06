@@ -22,10 +22,13 @@ export class AuthenticationError extends Error {
   }
 }
 
-export async function authenticate(
-  email: FormDataEntryValue | null,
+export async function authenticate({
+  email,
+  password,
+}: {
+  email: FormDataEntryValue | null
   password: FormDataEntryValue | null
-) {
+}) {
   const LoginUserSchema = z.object({
     email: userEmailSchema,
     password: userPasswordSchema,
@@ -109,22 +112,14 @@ export async function currentUser<T extends Prisma.UserSelectScalar>(
   })
 }
 
-export async function login({
-  request,
-  user,
-  successMessage = 'Successful login!',
-  redirectUrl = '/',
-}: {
-  request: Request
-  user: User
-  successMessage?: string
-  redirectUrl?: string
-}) {
+export async function login(
+  request: Request,
+  user: User,
+  redirectUrl: string = '/'
+) {
   const session = await getSession(request)
 
   session.set('userId', user.id)
-
-  session.flash('success', successMessage)
 
   return redirect(redirectUrl, {
     headers: {
