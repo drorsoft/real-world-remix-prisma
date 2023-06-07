@@ -109,16 +109,28 @@ export default function App() {
                 </a>
               </li>
               {loaderData.user?.id ? (
-                <li className="nav-item">
-                  <a className="nav-link" href="#/@romansandler">
-                    <img
-                      className="user-pic"
-                      src="https://api.realworld.io/images/smiley-cyrus.jpeg"
-                      alt=""
-                    />
-                    {loaderData.user.name}
-                  </a>
-                </li>
+                <>
+                  <li className="nav-item">
+                    <NavLink
+                      className={({ isActive }) =>
+                        clsx('nav-link', isActive && 'active')
+                      }
+                      to="/settings"
+                    >
+                      Settings
+                    </NavLink>
+                  </li>
+                  <li className="nav-item">
+                    <a className="nav-link" href="#/@romansandler">
+                      <img
+                        className="user-pic"
+                        src="https://api.realworld.io/images/smiley-cyrus.jpeg"
+                        alt=""
+                      />
+                      {loaderData.user.name}
+                    </a>
+                  </li>
+                </>
               ) : (
                 <>
                   <li className="nav-item">
