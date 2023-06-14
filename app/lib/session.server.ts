@@ -1,25 +1,32 @@
 import { createCookieSessionStorage } from '@remix-run/node'
 
-type SessionData = {
+export type SessionData = {
   userId: number
 }
 
-type SessionFlashData = {
+export type SessionFlashData = {
   error: string
   success: string
 }
 
-const { getSession, commitSession, destroySession } =
-  createCookieSessionStorage<SessionData, SessionFlashData>({
-    cookie: {
-      name: 'real_world_remix_session',
-      httpOnly: true,
-      maxAge: 60 * 60 * 24 * 1000 * 7,
-      path: '/',
-      sameSite: 'lax',
-      secrets: [process.env.SESSION_SECRET],
-      secure: true,
-    },
-  })
+const sessionStorage = createCookieSessionStorage<
+  SessionData,
+  SessionFlashData
+>({
+  cookie: {
+    name: 'real_world_remix_session',
+    httpOnly: true,
+    maxAge: 60 * 60 * 24 * 1000 * 7,
+    path: '/',
+    sameSite: 'lax',
+    secrets: [process.env.SESSION_SECRET],
+    secure: true,
+  },
+})
 
-export { getSession, commitSession, destroySession }
+export function getSession(request: Request) {
+  return sessionStorage.getSession(request.headers.get('Cookie'))
+}
+
+export const commitSession = sessionStorage.commitSession
+export const destroySession = sessionStorage.destroySession

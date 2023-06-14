@@ -1,5 +1,4 @@
 import type { LinksFunction, LoaderArgs } from '@remix-run/node'
-import { json } from '@remix-run/node'
 import {
   Links,
   LiveReload,
@@ -11,9 +10,10 @@ import {
   useLoaderData,
 } from '@remix-run/react'
 import clsx from 'clsx'
-import { commitSession, getSession } from './lib/session.server'
-import { PrismaClient } from '@prisma/client'
+import { getSession } from './lib/session.server'
 import React from 'react'
+import { db } from './lib/db.server'
+import { jsonHash } from 'remix-utils'
 
 export const links: LinksFunction = () => {
   return [
@@ -35,33 +35,25 @@ export const links: LinksFunction = () => {
 }
 
 export async function loader({ request }: LoaderArgs) {
-  const session = await getSession(request.headers.get('Cookie'))
+  const session = await getSession(request)
 
   const userId = session.get('userId')
   const successMessage = session.get('success')
   const errorMessage = session.get('error')
 
-  let userDTO = null
-
-  if (userId) {
-    const db = new PrismaClient()
-
-    const user = await db.user.findUnique({ where: { id: userId } })
-
-    userDTO = {
-      id: user?.id,
-      name: user?.name,
-    }
-  }
-
-  return json(
-    {
-      errorMessage,
-      successMessage,
-      user: userDTO,
+  return jsonHash({
+    errorMessage,
+    successMessage,
+    user() {
+      return db.user.findUnique({
+        where: { id: userId },
+        select: {
+          id: true,
+          name: true,
+        },
+      })
     },
-    { headers: { 'Set-Cookie': await commitSession(session) } }
-  )
+  })
 }
 
 export default function App() {

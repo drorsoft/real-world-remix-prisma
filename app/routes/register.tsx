@@ -1,11 +1,12 @@
 import type { ActionArgs } from '@remix-run/node'
 import { redirect } from '@remix-run/node'
-import { json } from '@remix-run/node'
 import { Form, Link, useActionData } from '@remix-run/react'
 import { z } from 'zod'
-import { PrismaClient } from '@prisma/client'
 import bcrypt from 'bcryptjs'
 import { commitSession, getSession } from '~/lib/session.server'
+import { db } from '~/lib/db.server'
+import { handleExceptions } from '~/lib/http.server'
+import { ErrorMessages } from '~/components/error-messages'
 
 export async function action({ request }: ActionArgs) {
   const formData = await request.formData()
@@ -31,7 +32,7 @@ export async function action({ request }: ActionArgs) {
       }),
   })
 
-  const session = await getSession(request.headers.get('Cookie'))
+  const session = await getSession(request)
 
   try {
     const validated = await CreateUserSchema.parseAsync({
@@ -39,8 +40,6 @@ export async function action({ request }: ActionArgs) {
       email,
       password,
     })
-
-    const db = new PrismaClient()
 
     const user = await db.user.create({
       data: {
@@ -63,21 +62,9 @@ export async function action({ request }: ActionArgs) {
       },
     })
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return json({ errors: error.flatten().fieldErrors }, { status: 422 })
-    }
-
     session.flash('error', 'Registration failed')
 
-    return json(
-      { errors: {} },
-      {
-        status: 400,
-        headers: {
-          'Set-Cookie': await commitSession(session),
-        },
-      }
-    )
+    return handleExceptions(error)
   }
 }
 
@@ -93,17 +80,7 @@ export default function Register() {
             <p className="text-xs-center">
               <Link to="/login">Have an account?</Link>
             </p>
-
-            {actionData && (
-              <ul className="error-messages">
-                {Object.entries(actionData.errors).map(([key, messages]) => (
-                  <li key={key}>
-                    {key} {Array.isArray(messages) ? messages[0] : messages}
-                  </li>
-                ))}
-              </ul>
-            )}
-
+            {actionData && <ErrorMessages errors={actionData.errors} />}
             <Form method="POST">
               <fieldset className="form-group">
                 <input
