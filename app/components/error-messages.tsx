@@ -1,8 +1,10 @@
 export function ErrorMessages({
   errors,
 }: {
-  errors: Record<string, string[]>
+  errors?: Record<string, string[]>
 }) {
+  if (!errors) return null
+
   return (
     <ul className="error-messages">
       {Object.entries(errors).map(([key, messages]) => (

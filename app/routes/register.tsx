@@ -64,6 +64,8 @@ export async function action({ request }: ActionArgs) {
   } catch (error) {
     session.flash('error', 'Registration failed')
 
+    await commitSession(session)
+
     return handleExceptions(error)
   }
 }
