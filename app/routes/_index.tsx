@@ -1,4 +1,32 @@
+import { type LoaderArgs } from '@remix-run/node'
+import { useLoaderData } from '@remix-run/react'
+import dayjs from 'dayjs'
+import { jsonHash } from 'remix-utils'
+import { db } from '~/lib/db.server'
+import advancedFormat from 'dayjs/plugin/advancedFormat'
+
+dayjs.extend(advancedFormat)
+
+export async function loader({ request }: LoaderArgs) {
+  return jsonHash({
+    async articles() {
+      return db.article.findMany({
+        include: {
+          author: {
+            select: {
+              avatar: true,
+              name: true,
+            },
+          },
+        },
+      })
+    },
+  })
+}
+
 export default function Home() {
+  const loaderData = useLoaderData<typeof loader>()
+
   return (
     <div className="home-page">
       <div className="banner">
@@ -25,53 +53,31 @@ export default function Home() {
                 </li>
               </ul>
             </div>
-
-            <div className="article-preview">
-              <div className="article-meta">
-                <a href="profile.html">
-                  <img src="http://i.imgur.com/Qr71crq.jpg" />
-                </a>
-                <div className="info">
-                  <a href="" className="author">
-                    Eric Simons
+            {loaderData.articles.map((article) => (
+              <div className="article-preview" key={article.id}>
+                <div className="article-meta">
+                  <a href="profile.html">
+                    <img src={article.author.avatar} />
                   </a>
-                  <span className="date">January 20th</span>
+                  <div className="info">
+                    <a href="" className="author">
+                      {article.author.name}
+                    </a>
+                    <span className="date">
+                      {dayjs(article.createdAt).format('MMMM Do')}
+                    </span>
+                  </div>
+                  <button className="btn btn-outline-primary btn-sm pull-xs-right">
+                    <i className="ion-heart"></i> 29
+                  </button>
                 </div>
-                <button className="btn btn-outline-primary btn-sm pull-xs-right">
-                  <i className="ion-heart"></i> 29
-                </button>
-              </div>
-              <a href="" className="preview-link">
-                <h1>How to build webapps that scale</h1>
-                <p>This is the description for the post.</p>
-                <span>Read more...</span>
-              </a>
-            </div>
-
-            <div className="article-preview">
-              <div className="article-meta">
-                <a href="profile.html">
-                  <img src="http://i.imgur.com/N4VcUeJ.jpg" />
+                <a href="" className="preview-link">
+                  <h1>{article.title}</h1>
+                  <p>{article.description}</p>
+                  <span>Read more...</span>
                 </a>
-                <div className="info">
-                  <a href="" className="author">
-                    Albert Pai
-                  </a>
-                  <span className="date">January 20th</span>
-                </div>
-                <button className="btn btn-outline-primary btn-sm pull-xs-right">
-                  <i className="ion-heart"></i> 32
-                </button>
               </div>
-              <a href="" className="preview-link">
-                <h1>
-                  The song you won't ever stop singing. No matter how hard you
-                  try.
-                </h1>
-                <p>This is the description for the post.</p>
-                <span>Read more...</span>
-              </a>
-            </div>
+            ))}
           </div>
 
           <div className="col-md-3">

@@ -1,4 +1,5 @@
-import { createCookieSessionStorage } from '@remix-run/node'
+import { createSessionStorage } from '@remix-run/node'
+import { db } from './db.server'
 
 export type SessionData = {
   userId: number
@@ -9,18 +10,45 @@ export type SessionFlashData = {
   success: string
 }
 
-const sessionStorage = createCookieSessionStorage<
-  SessionData,
-  SessionFlashData
->({
+const sessionStorage = createSessionStorage<SessionData, SessionFlashData>({
   cookie: {
     name: 'real_world_remix_session',
     httpOnly: true,
-    maxAge: 60 * 60 * 24 * 1000 * 7,
+    maxAge: 60 * 60 * 24 * 1000 * 7, // one week
     path: '/',
     sameSite: 'lax',
     secrets: [process.env.SESSION_SECRET],
     secure: true,
+  },
+  async createData(data, expires) {
+    const { id } = await db.session.create({
+      data: {
+        expiresAt: expires!,
+        userId: data.userId!,
+        payload: JSON.stringify(data),
+      },
+    })
+
+    return String(id)
+  },
+  async readData(id) {
+    const session = await db.session.findUnique({ where: { id: Number(id) } })
+
+    return session?.payload ? JSON.parse(session?.payload) : null
+  },
+  async updateData(id, data, expires) {
+    await db.session.update({
+      where: {
+        id: Number(id),
+      },
+      data: {
+        payload: JSON.stringify(data),
+        expiresAt: expires,
+      },
+    })
+  },
+  async deleteData(id) {
+    await db.session.delete({ where: { id: Number(id) } })
   },
 })
 

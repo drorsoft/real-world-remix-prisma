@@ -1,4 +1,5 @@
 import type { LinksFunction, LoaderArgs } from '@remix-run/node'
+import type { NavLinkProps } from '@remix-run/react'
 import {
   Links,
   LiveReload,
@@ -14,6 +15,7 @@ import { getSession } from './lib/session.server'
 import React from 'react'
 import { db } from './lib/db.server'
 import { jsonHash } from 'remix-utils'
+import { getMessages } from './lib/messages.server'
 
 export const links: LinksFunction = () => {
   return [
@@ -38,13 +40,14 @@ export async function loader({ request }: LoaderArgs) {
   const session = await getSession(request)
 
   const userId = session.get('userId')
-  const successMessage = session.get('success')
-  const errorMessage = session.get('error')
 
   return jsonHash({
-    errorMessage,
-    successMessage,
-    user() {
+    async messages() {
+      return getMessages(request)
+    },
+    async user() {
+      if (!userId) return
+
       return db.user.findUnique({
         where: { id: userId },
         select: {
@@ -62,12 +65,12 @@ export default function App() {
     React.useState(false)
 
   React.useEffect(() => {
-    if (loaderData.successMessage || loaderData.errorMessage) {
+    if (loaderData.messages.success || loaderData.messages.error) {
       setIsFlashMessageVisible(true)
 
       setTimeout(() => setIsFlashMessageVisible(false), 3000)
     }
-  }, [loaderData.errorMessage, loaderData.successMessage])
+  }, [loaderData.messages.error, loaderData.messages.success])
 
   return (
     <html lang="en">
@@ -85,32 +88,18 @@ export default function App() {
             </a>
             <ul className="nav navbar-nav pull-xs-right">
               <li className="nav-item">
-                <NavLink
-                  className={({ isActive }) =>
-                    clsx('nav-link', isActive && 'active')
-                  }
-                  to="/"
-                >
-                  Home
-                </NavLink>
+                <NavbarLink to="/">Home</NavbarLink>
               </li>
-              <li className="nav-item">
-                <a className="nav-link" href="">
-                  {' '}
-                  <i className="ion-compose"></i>&nbsp;New Article{' '}
-                </a>
-              </li>
-              {loaderData.user?.id ? (
+              {loaderData.user ? (
                 <>
                   <li className="nav-item">
-                    <NavLink
-                      className={({ isActive }) =>
-                        clsx('nav-link', isActive && 'active')
-                      }
-                      to="/settings"
-                    >
-                      Settings
-                    </NavLink>
+                    <NavbarLink to="/articles/new">
+                      {' '}
+                      <i className="ion-compose"></i>&nbsp;New Article{' '}
+                    </NavbarLink>
+                  </li>
+                  <li className="nav-item">
+                    <NavbarLink to="/settings">Settings</NavbarLink>
                   </li>
                   <li className="nav-item">
                     <a className="nav-link" href="#/@romansandler">
@@ -119,31 +108,17 @@ export default function App() {
                         src="https://api.realworld.io/images/smiley-cyrus.jpeg"
                         alt=""
                       />
-                      {loaderData.user.name}
+                      {loaderData.user?.name}
                     </a>
                   </li>
                 </>
               ) : (
                 <>
                   <li className="nav-item">
-                    <NavLink
-                      className={({ isActive }) =>
-                        clsx('nav-link', isActive && 'active')
-                      }
-                      to="/login"
-                    >
-                      Sign in
-                    </NavLink>
+                    <NavbarLink to="/login">Sign in</NavbarLink>
                   </li>
                   <li className="nav-item">
-                    <NavLink
-                      className={({ isActive }) =>
-                        clsx('nav-link', isActive && 'active')
-                      }
-                      to="/register"
-                    >
-                      Sign up
-                    </NavLink>
+                    <NavbarLink to="/register">Sign up</NavbarLink>
                   </li>
                 </>
               )}
@@ -153,13 +128,13 @@ export default function App() {
         {isFlashMessageVisible && (
           <div
             className={clsx('alert', {
-              'alert-success': loaderData.successMessage,
-              'alert-danger': loaderData.errorMessage,
+              'alert-success': loaderData.messages.success,
+              'alert-danger': loaderData.messages.error,
             })}
             role="alert"
             style={{ margin: 0, borderRadius: 0 }}
           >
-            {loaderData.successMessage || loaderData.errorMessage}
+            {loaderData.messages.success || loaderData.messages.error}
           </div>
         )}
         <Outlet />
@@ -180,5 +155,18 @@ export default function App() {
         <LiveReload />
       </body>
     </html>
+  )
+}
+
+function NavbarLink({ children, className, ...props }: NavLinkProps) {
+  return (
+    <NavLink
+      className={({ isActive }) =>
+        clsx('nav-link', isActive && 'active', className)
+      }
+      {...props}
+    >
+      {children}
+    </NavLink>
   )
 }
