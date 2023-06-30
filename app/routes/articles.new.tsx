@@ -111,7 +111,7 @@ export default function ArticlesNew() {
                     placeholder="Write your article (in markdown)"
                   ></textarea>
                 </fieldset>
-                <TagsCombobox />
+                <TagsField />
                 <button className="btn btn-lg pull-xs-right btn-primary">
                   Publish Article
                 </button>
@@ -124,7 +124,7 @@ export default function ArticlesNew() {
   )
 }
 
-function TagsCombobox() {
+function TagsField() {
   let [value, setValue] = React.useState('')
   const selectedTags = useListData<{ id: string }>({
     initialItems: [],
