@@ -3,9 +3,7 @@ import { getSession } from './session.server'
 import { LOGIN_URL } from '~/settings'
 
 export async function requireLogin(request: Request) {
-  const session = await getSession(request)
-
-  const userId = session.get('userId')
+  const userId = await currentUserId(request)
 
   const url = new URL(request.url)
 
@@ -18,4 +16,10 @@ export async function requireLogin(request: Request) {
   return userId
 }
 
-export const currentUserId = requireLogin
+export const requireUserId = requireLogin
+
+export async function currentUserId(request: Request) {
+  const session = await getSession(request)
+
+  return session.get('userId')
+}
