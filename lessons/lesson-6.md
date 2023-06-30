@@ -1,4 +1,4 @@
-## Create an article lesson
+## Tag an article lesson
 
 Time to tackle "tagging" an article. In this lesson we will add the ability to "tag" an article with multiple tags and we will show a list of popular tags on the main page.
 
