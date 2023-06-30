@@ -113,3 +113,7 @@ Time to tackle "tagging" an article. In this lesson we will add the ability to "
         </a>
     ))}
    ```
+
+### Bonus!
+
+1. Clicking on a "popular tag" adds a "tab" with the tag name and shows a list of articles related to that tag
