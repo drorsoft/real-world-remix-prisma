@@ -24,7 +24,6 @@ const sessionStorage = createSessionStorage<SessionData, SessionFlashData>({
     const { id } = await db.session.create({
       data: {
         expiresAt: expires!,
-        userId: data.userId!,
         payload: JSON.stringify(data),
       },
     })
