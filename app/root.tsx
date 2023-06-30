@@ -53,6 +53,7 @@ export async function loader({ request }: LoaderArgs) {
         select: {
           id: true,
           name: true,
+          avatar: true,
         },
       })
     },
@@ -102,14 +103,17 @@ export default function App() {
                     <NavbarLink to="/settings">Settings</NavbarLink>
                   </li>
                   <li className="nav-item">
-                    <a className="nav-link" href="#/@romansandler">
+                    <NavbarLink
+                      className="nav-link"
+                      to={`/profiles/${loaderData.user.id}`}
+                    >
                       <img
                         className="user-pic"
-                        src="https://api.realworld.io/images/smiley-cyrus.jpeg"
+                        src={loaderData.user.avatar}
                         alt=""
                       />
                       {loaderData.user?.name}
-                    </a>
+                    </NavbarLink>
                   </li>
                 </>
               ) : (
