@@ -7,7 +7,6 @@ import { currentUserId, requireLogin } from '~/lib/auth.server'
 import { db } from '~/lib/db.server'
 import { handleExceptions } from '~/lib/http.server'
 import { addMessage } from '~/lib/messages.server'
-import { TagList, Tag, TagGroup } from 'react-aria-components'
 import { useListData } from '@react-stately/data'
 import React from 'react'
 
@@ -126,7 +125,7 @@ export default function ArticlesNew() {
 }
 
 function TagsCombobox() {
-  let [inputValue, setInputValue] = React.useState('')
+  let [value, setValue] = React.useState('')
   const selectedTags = useListData<{ id: string }>({
     initialItems: [],
   })
@@ -134,36 +133,30 @@ function TagsCombobox() {
   return (
     <fieldset className="form-group">
       <input
-        value={inputValue}
-        onChange={(e) => setInputValue(e.currentTarget.value)}
+        value={value}
+        onChange={(e) => setValue(e.currentTarget.value)}
         onKeyDown={(e) => {
           if (e.key === 'Enter') {
             e.preventDefault()
-            setInputValue('')
+            setValue('')
             selectedTags.append({ id: e.currentTarget.value })
           }
         }}
         className="form-control"
         placeholder="Enter tags"
       />
-      <TagGroup aria-label="Tags">
-        <TagList className="tag-list" items={selectedTags.items}>
-          {(tag) => (
-            <Tag
-              textValue={tag.id}
-              id={tag.id}
-              className="tag-default tag-pill"
-            >
-              <input value={tag.id} type="hidden" name="tag" />
-              <i
-                onClick={() => selectedTags.remove(tag.id)}
-                className="ion-close-round"
-              ></i>
-              {tag.id}
-            </Tag>
-          )}
-        </TagList>
-      </TagGroup>
+      <div className="tag-list">
+        {selectedTags.items.map((tag) => (
+          <span key={tag.id} className="tag-default tag-pill">
+            <input value={tag.id} type="hidden" name="tag" />
+            <i
+              onClick={() => selectedTags.remove(tag.id)}
+              className="ion-close-round"
+            ></i>
+            {tag.id}
+          </span>
+        ))}
+      </div>
     </fieldset>
   )
 }
