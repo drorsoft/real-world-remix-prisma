@@ -7,6 +7,9 @@ import { currentUserId, requireLogin } from '~/lib/auth.server'
 import { db } from '~/lib/db.server'
 import { handleExceptions } from '~/lib/http.server'
 import { addMessage } from '~/lib/messages.server'
+import { TagList, Tag, TagGroup } from 'react-aria-components'
+import { useListData } from '@react-stately/data'
+import React from 'react'
 
 export async function loader({ request }: LoaderArgs) {
   await requireLogin(request)
@@ -20,11 +23,13 @@ export async function action({ request }: ActionArgs) {
   const title = formData.get('title')
   const description = formData.get('description')
   const body = formData.get('body')
+  const tags = formData.getAll('tag')
 
   const ArticleSchema = z.object({
     title: z.string().min(1, { message: "can't be blank" }),
     description: z.string().min(1, { message: "can't be blank" }),
     body: z.string().min(1, { message: "can't be blank" }),
+    tags: z.array(z.string()).optional(),
   })
 
   try {
@@ -32,6 +37,7 @@ export async function action({ request }: ActionArgs) {
       title,
       description,
       body,
+      tags,
     })
 
     const userId = await currentUserId(request)
@@ -45,6 +51,16 @@ export async function action({ request }: ActionArgs) {
           connect: {
             id: userId,
           },
+        },
+        tags: {
+          connectOrCreate: validated.tags?.map((tag) => ({
+            create: {
+              title: tag,
+            },
+            where: {
+              title: tag,
+            },
+          })),
         },
       },
     })
@@ -96,14 +112,7 @@ export default function ArticlesNew() {
                     placeholder="Write your article (in markdown)"
                   ></textarea>
                 </fieldset>
-                <fieldset className="form-group">
-                  <input
-                    type="text"
-                    className="form-control"
-                    placeholder="Enter tags"
-                  />
-                  <div className="tag-list"></div>
-                </fieldset>
+                <TagsCombobox />
                 <button className="btn btn-lg pull-xs-right btn-primary">
                   Publish Article
                 </button>
@@ -113,5 +122,48 @@ export default function ArticlesNew() {
         </div>
       </div>
     </div>
+  )
+}
+
+function TagsCombobox() {
+  let [inputValue, setInputValue] = React.useState('')
+  const selectedTags = useListData<{ id: string }>({
+    initialItems: [],
+  })
+
+  return (
+    <fieldset className="form-group">
+      <input
+        value={inputValue}
+        onChange={(e) => setInputValue(e.currentTarget.value)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault()
+            setInputValue('')
+            selectedTags.append({ id: e.currentTarget.value })
+          }
+        }}
+        className="form-control"
+        placeholder="Enter tags"
+      />
+      <TagGroup aria-label="Tags">
+        <TagList className="tag-list" items={selectedTags.items}>
+          {(tag) => (
+            <Tag
+              textValue={tag.id}
+              id={tag.id}
+              className="tag-default tag-pill"
+            >
+              <input value={tag.id} type="hidden" name="tag" />
+              <i
+                onClick={() => selectedTags.remove(tag.id)}
+                className="ion-close-round"
+              ></i>
+              {tag.id}
+            </Tag>
+          )}
+        </TagList>
+      </TagGroup>
+    </fieldset>
   )
 }

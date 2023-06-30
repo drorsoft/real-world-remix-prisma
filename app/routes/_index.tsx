@@ -18,6 +18,19 @@ export async function loader({ request }: LoaderArgs) {
               name: true,
             },
           },
+          tags: {
+            select: {
+              title: true,
+            },
+          },
+        },
+      })
+    },
+    async popularTags() {
+      return db.tag.findMany({
+        select: {
+          id: true,
+          title: true,
         },
       })
     },
@@ -75,6 +88,16 @@ export default function Home() {
                   <h1>{article.title}</h1>
                   <p>{article.description}</p>
                   <span>Read more...</span>
+                  <ul className="tag-list">
+                    {article.tags.map((tag) => (
+                      <li
+                        key={tag.title}
+                        className="tag-default tag-pill tag-outline"
+                      >
+                        {tag.title}
+                      </li>
+                    ))}
+                  </ul>
                 </a>
               </div>
             ))}
@@ -85,30 +108,11 @@ export default function Home() {
               <p>Popular Tags</p>
 
               <div className="tag-list">
-                <a href="" className="tag-pill tag-default">
-                  programming
-                </a>
-                <a href="" className="tag-pill tag-default">
-                  javascript
-                </a>
-                <a href="" className="tag-pill tag-default">
-                  emberjs
-                </a>
-                <a href="" className="tag-pill tag-default">
-                  angularjs
-                </a>
-                <a href="" className="tag-pill tag-default">
-                  react
-                </a>
-                <a href="" className="tag-pill tag-default">
-                  mean
-                </a>
-                <a href="" className="tag-pill tag-default">
-                  node
-                </a>
-                <a href="" className="tag-pill tag-default">
-                  rails
-                </a>
+                {loaderData.popularTags.map((tag) => (
+                  <a key={tag.id} href="" className="tag-pill tag-default">
+                    {tag.title}
+                  </a>
+                ))}
               </div>
             </div>
           </div>
