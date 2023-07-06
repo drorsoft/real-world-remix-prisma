@@ -32,4 +32,11 @@ model Article {
   author      User     @relation(fields: [userId], references: [id])
   userId      Int
   createdAt   DateTime @default(now())
+  tags        Tag[]
+}
+
+model Tag {
+  id       Int       @id @default(autoincrement())
+  title    String    @unique()
+  articles Article[]
 }
