@@ -5,13 +5,9 @@ import {
   useNavigation,
   useParams,
 } from '@remix-run/react'
-import dayjs from 'dayjs'
 import { jsonHash } from 'remix-utils'
 import { db } from '~/lib/db.server'
-import advancedFormat from 'dayjs/plugin/advancedFormat'
 import clsx from 'clsx'
-
-dayjs.extend(advancedFormat)
 
 export async function loader() {
   return jsonHash({
