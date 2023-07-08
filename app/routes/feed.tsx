@@ -72,7 +72,6 @@ export default function Home() {
               </ul>
             </div>
             <Outlet />
-            {navigation.state === 'loading' && <p>Loading articles...</p>}
           </div>
 
           <div className="col-md-3">
