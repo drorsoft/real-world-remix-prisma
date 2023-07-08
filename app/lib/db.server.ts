@@ -1,5 +1,6 @@
 import type { Prisma } from '@prisma/client'
 import { PrismaClient } from '@prisma/client'
+import { DEFAULT_PAGE_LENGTH } from '~/settings'
 
 let prisma: PrismaClient
 
@@ -31,12 +32,11 @@ const db = prisma.$extends({
         where?: Prisma.ArticleWhereInput
         page?: number | string
       } = {}) {
-        const TAKE = 1000
-        const skip = (Number(page) - 1) * TAKE
+        const skip = (Number(page) - 1) * DEFAULT_PAGE_LENGTH
 
         return prisma.article.findMany({
           skip,
-          take: TAKE,
+          take: DEFAULT_PAGE_LENGTH,
           where,
           include: {
             author: {

@@ -9,7 +9,7 @@
   },
   "dependencies": {
     "@faker-js/faker": "^8.0.2",
-    "@prisma/client": "^4.16.1",
+    "@prisma/client": "^4.16.2",
     "@react-stately/data": "^3.10.0",
     "@remix-run/css-bundle": "^1.16.0",
     "@remix-run/node": "^1.16.0",

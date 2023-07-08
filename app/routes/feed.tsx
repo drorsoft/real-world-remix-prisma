@@ -4,7 +4,6 @@ import {
   useLoaderData,
   useNavigation,
   useParams,
-  useSearchParams,
 } from '@remix-run/react'
 import dayjs from 'dayjs'
 import { jsonHash } from 'remix-utils'
@@ -16,9 +15,6 @@ dayjs.extend(advancedFormat)
 
 export async function loader() {
   return jsonHash({
-    async totalArticles() {
-      return db.article.count()
-    },
     async popularTags() {
       return db.tag.findMany({
         select: {
@@ -33,14 +29,9 @@ export async function loader() {
 export default function Home() {
   const loaderData = useLoaderData<typeof loader>()
   const params = useParams()
-  const [searchParams] = useSearchParams()
   const navigation = useNavigation()
 
-  const navigatingTo = new URLSearchParams(navigation.location?.search)
-
   const tag = params.tag
-
-  const activePage = navigatingTo.get('page') || searchParams.get('page') || '1'
 
   return (
     <div className="home-page">
@@ -80,37 +71,8 @@ export default function Home() {
                 )}
               </ul>
             </div>
-            {navigation.state === 'loading' ? (
-              <p>Loading articles...</p>
-            ) : (
-              <Outlet />
-            )}
-            <nav>
-              <ul className="pagination">
-                {Array.from({ length: loaderData.totalArticles / 1000 }).map(
-                  (_, i) => {
-                    const page = i + 1
-
-                    return (
-                      <li
-                        className={clsx(
-                          'page-item',
-                          Number(activePage) === page && 'active'
-                        )}
-                        key={i}
-                      >
-                        <NavLink
-                          className="page-link"
-                          to={{ search: `?page=${page}` }}
-                        >
-                          {page}
-                        </NavLink>
-                      </li>
-                    )
-                  }
-                )}
-              </ul>
-            </nav>
+            <Outlet />
+            {navigation.state === 'loading' && <p>Loading articles...</p>}
           </div>
 
           <div className="col-md-3">
