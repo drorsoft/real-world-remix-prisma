@@ -1,10 +1,8 @@
-import * as articleModelExtension from './extension/model/article'
+import * as model from './extension/model'
 import { prisma } from './prisma'
 
 const db = prisma.$extends({
-  model: {
-    article: articleModelExtension,
-  },
+  model,
 })
 
 export { db }
