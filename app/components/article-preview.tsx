@@ -1,5 +1,8 @@
 import dayjs from 'dayjs'
 import type { ArticlePreviewDTO } from '~/dto/article'
+import advancedFormat from 'dayjs/plugin/advancedFormat'
+
+dayjs.extend(advancedFormat)
 
 export function ArticlePreview({ article }: { article: ArticlePreviewDTO }) {
   return (
