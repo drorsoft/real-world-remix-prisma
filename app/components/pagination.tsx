@@ -15,37 +15,31 @@ export function Pagination({ totalCount }: { totalCount: number }) {
   if (totalCount <= pageLength) return null
 
   return (
-    <>
-      {navigation.state === 'loading' && <p>Loading articles...</p>}
-      <nav>
-        <ul className="pagination">
-          {Array.from(
-            { length: Math.ceil(totalCount / pageLength) },
-            (_, i) => {
-              const page = i + 1
+    <nav>
+      <ul className="pagination">
+        {Array.from({ length: Math.ceil(totalCount / pageLength) }, (_, i) => {
+          const page = i + 1
 
-              return (
-                <li
-                  className={clsx(
-                    'page-item',
-                    Number(activePage) === page && 'active'
-                  )}
-                  key={i}
-                >
-                  <NavLink
-                    className="page-link"
-                    to={{ search: `?page=${page}` }}
-                    preventScrollReset
-                    prefetch="intent"
-                  >
-                    {page}
-                  </NavLink>
-                </li>
-              )
-            }
-          )}
-        </ul>
-      </nav>
-    </>
+          return (
+            <li
+              className={clsx(
+                'page-item',
+                Number(activePage) === page && 'active'
+              )}
+              key={i}
+            >
+              <NavLink
+                className="page-link"
+                to={{ search: `?page=${page}` }}
+                preventScrollReset
+                prefetch="intent"
+              >
+                {page}
+              </NavLink>
+            </li>
+          )
+        })}
+      </ul>
+    </nav>
   )
 }

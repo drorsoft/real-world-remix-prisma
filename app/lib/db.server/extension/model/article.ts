@@ -1,6 +1,6 @@
 import type { Prisma } from '@prisma/client'
 import { DEFAULT_PAGE_LENGTH } from '~/settings'
-import { prisma } from '..'
+import { prisma } from '../../prisma'
 
 export async function previews({
   where,
@@ -15,6 +15,9 @@ export async function previews({
     skip,
     take: DEFAULT_PAGE_LENGTH,
     where,
+    orderBy: {
+      title: 'desc',
+    },
     include: {
       author: {
         select: {

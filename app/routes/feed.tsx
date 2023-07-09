@@ -1,10 +1,4 @@
-import {
-  NavLink,
-  Outlet,
-  useLoaderData,
-  useNavigation,
-  useParams,
-} from '@remix-run/react'
+import { NavLink, Outlet, useLoaderData, useParams } from '@remix-run/react'
 import { jsonHash } from 'remix-utils'
 import { db } from '~/lib/db.server'
 import clsx from 'clsx'
@@ -25,7 +19,6 @@ export async function loader() {
 export default function Home() {
   const loaderData = useLoaderData<typeof loader>()
   const params = useParams()
-  const navigation = useNavigation()
 
   const tag = params.tag
 
