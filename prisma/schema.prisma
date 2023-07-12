@@ -14,7 +14,8 @@ model User {
   password String
   avatar   String    @default("https://api.realworld.io/images/smiley-cyrus.jpeg")
   bio      String?
-  Article  Article[]
+  articles Article[]
+  comments Comment[]
 }
 
 model Session {
@@ -25,14 +26,25 @@ model Session {
 }
 
 model Article {
-  id          Int      @id @default(autoincrement())
+  id          Int       @id @default(autoincrement())
   title       String
   description String
   body        String
-  author      User     @relation(fields: [userId], references: [id])
+  author      User      @relation(fields: [userId], references: [id])
   userId      Int
-  createdAt   DateTime @default(now())
+  createdAt   DateTime  @default(now())
   tags        Tag[]
+  comments    Comment[]
+}
+
+model Comment {
+  id        Int      @id @default(autoincrement())
+  body      String
+  createdAt DateTime @default(now())
+  userId    Int
+  author    User     @relation(fields: [userId], references: [id])
+  articleId Int
+  article   Article  @relation(fields: [articleId], references: [id])
 }
 
 model Tag {

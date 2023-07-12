@@ -1,6 +1,7 @@
 import dayjs from 'dayjs'
 import type { ArticlePreviewDTO } from '~/dto/article'
 import advancedFormat from 'dayjs/plugin/advancedFormat'
+import { Link } from '@remix-run/react'
 
 dayjs.extend(advancedFormat)
 
@@ -23,7 +24,7 @@ export function ArticlePreview({ article }: { article: ArticlePreviewDTO }) {
           <i className="ion-heart"></i> 29
         </button>
       </div>
-      <a href="" className="preview-link">
+      <Link to={`/articles/${article.id}`} className="preview-link">
         <h1>{article.title}</h1>
         <p>{article.description}</p>
         <span>Read more...</span>
@@ -34,7 +35,7 @@ export function ArticlePreview({ article }: { article: ArticlePreviewDTO }) {
             </li>
           ))}
         </ul>
-      </a>
+      </Link>
     </div>
   )
 }
