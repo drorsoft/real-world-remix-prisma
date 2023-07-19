@@ -18,23 +18,23 @@ export async function loader({ params, request }: LoaderArgs) {
 
   invariant(articleId, 'this route must have and ID param in the definition')
 
-  const article = await db.article.findUnique({
-    include: {
-      author: {
-        select: {
-          name: true,
-          id: true,
-          avatar: true,
-        },
-      },
-    },
-    where: {
-      id: Number(articleId),
-    },
-  })
-
   return jsonHash({
-    article,
+    article() {
+      return db.article.findUnique({
+        include: {
+          author: {
+            select: {
+              name: true,
+              id: true,
+              avatar: true,
+            },
+          },
+        },
+        where: {
+          id: Number(articleId),
+        },
+      })
+    },
     async comments() {
       return db.comment.findMany({
         orderBy: {
