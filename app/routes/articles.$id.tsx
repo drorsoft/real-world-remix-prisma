@@ -19,7 +19,7 @@ export async function loader({ params, request }: LoaderArgs) {
   invariant(articleId, 'this route must have and ID param in the definition')
 
   return jsonHash({
-    article() {
+    async article() {
       return db.article.findUnique({
         include: {
           author: {
