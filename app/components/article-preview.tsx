@@ -2,10 +2,13 @@ import dayjs from 'dayjs'
 import type { ArticlePreviewDTO } from '~/dto/article'
 import advancedFormat from 'dayjs/plugin/advancedFormat'
 import { Link } from '@remix-run/react'
+import { FavoriteArticleButton } from './favorite-article-button'
 
 dayjs.extend(advancedFormat)
 
 export function ArticlePreview({ article }: { article: ArticlePreviewDTO }) {
+  const hasBeenFavorited = article._count.favorited > 0
+
   return (
     <div className="article-preview" key={article.id}>
       <div className="article-meta">
@@ -20,9 +23,11 @@ export function ArticlePreview({ article }: { article: ArticlePreviewDTO }) {
             {dayjs(article.createdAt).format('MMMM Do')}
           </span>
         </div>
-        <button className="btn btn-outline-primary btn-sm pull-xs-right">
-          <i className="ion-heart"></i> 29
-        </button>
+        <FavoriteArticleButton
+          articleId={article.id}
+          hasBeenFavorited={hasBeenFavorited}
+          favoritedCount={article._count.favorited}
+        />
       </div>
       <Link to={`/articles/${article.id}`} className="preview-link">
         <h1>{article.title}</h1>
