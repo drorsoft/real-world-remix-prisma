@@ -1,12 +1,6 @@
 import type { Comment, User } from '@prisma/client'
 import { json, type ActionArgs, type LoaderArgs } from '@remix-run/node'
-import {
-  Form,
-  useActionData,
-  useLoaderData,
-  useNavigation,
-  useSubmit,
-} from '@remix-run/react'
+import { Form, useLoaderData, useNavigation } from '@remix-run/react'
 import dayjs from 'dayjs'
 import advancedFormat from 'dayjs/plugin/advancedFormat'
 import React from 'react'
@@ -16,7 +10,6 @@ import { z } from 'zod'
 import { currentUserId } from '~/lib/auth.server'
 import { db } from '~/lib/db.server'
 import { handleExceptions } from '~/lib/http.server'
-import { useForm } from '~/utils/form'
 
 dayjs.extend(advancedFormat)
 
@@ -80,8 +73,6 @@ export async function loader({ params, request }: LoaderArgs) {
   }
 }
 
-const sleep = () => new Promise((resolve) => setTimeout(resolve, 3000))
-
 export async function action({ request, params }: ActionArgs) {
   invariant(params.id, 'this route must have and ID param in the definition')
 
@@ -106,8 +97,6 @@ export async function action({ request, params }: ActionArgs) {
       },
     })
 
-    await sleep()
-
     return json({ success: true })
   } catch (error) {
     throw handleExceptions(error)
@@ -118,10 +107,10 @@ export default function ArticleDetails() {
   const loaderData = useLoaderData<typeof loader>()
   const formRef = React.useRef<HTMLFormElement>(null)
   const navigation = useNavigation()
-  const { isPending } = useForm(formRef, {
-    resetOnSubmit: true,
-    submitOnEnter: true,
-  })
+
+  const isPending =
+    navigation.state === 'submitting' ||
+    (navigation.formMethod === 'POST' && navigation.state === 'loading')
 
   const pendingComment = {
     id: -1,
@@ -132,6 +121,12 @@ export default function ArticleDetails() {
     },
     createdAt: dayjs().format('MMMM Do'),
   }
+
+  React.useEffect(() => {
+    if (navigation.state === 'submitting' && formRef.current) {
+      formRef.current.reset()
+    }
+  }, [navigation.state])
 
   return (
     <div className="article-page">
