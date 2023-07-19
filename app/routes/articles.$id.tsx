@@ -18,59 +18,55 @@ export async function loader({ params, request }: LoaderArgs) {
 
   invariant(articleId, 'this route must have and ID param in the definition')
 
-  try {
-    const article = await db.article.findUnique({
-      include: {
-        author: {
-          select: {
-            name: true,
-            id: true,
-            avatar: true,
-          },
+  const article = await db.article.findUnique({
+    include: {
+      author: {
+        select: {
+          name: true,
+          id: true,
+          avatar: true,
         },
       },
-      where: {
-        id: Number(articleId),
-      },
-    })
+    },
+    where: {
+      id: Number(articleId),
+    },
+  })
 
-    return jsonHash({
-      article,
-      async comments() {
-        return db.comment.findMany({
-          orderBy: {
-            createdAt: 'desc',
-          },
-          include: {
-            author: {
-              select: {
-                avatar: true,
-                name: true,
-              },
+  return jsonHash({
+    article,
+    async comments() {
+      return db.comment.findMany({
+        orderBy: {
+          createdAt: 'desc',
+        },
+        include: {
+          author: {
+            select: {
+              avatar: true,
+              name: true,
             },
           },
-          where: {
-            articleId: Number(articleId),
-          },
-        })
-      },
-      async currentUser() {
-        const userId = await currentUserId(request)
+        },
+        where: {
+          articleId: Number(articleId),
+        },
+      })
+    },
+    async currentUser() {
+      const userId = await currentUserId(request)
 
-        return db.user.findUnique({
-          select: {
-            avatar: true,
-            name: true,
-          },
-          where: {
-            id: userId,
-          },
-        })
-      },
-    })
-  } catch (error) {
-    throw notFound(`an article with an ID of ${articleId} was not found`)
-  }
+      return db.user.findUnique({
+        select: {
+          avatar: true,
+          name: true,
+        },
+        where: {
+          id: userId,
+        },
+      })
+    },
+  })
 }
 
 export async function action({ request, params }: ActionArgs) {
