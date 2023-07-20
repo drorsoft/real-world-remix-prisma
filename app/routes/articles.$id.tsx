@@ -4,9 +4,10 @@ import { Form, useLoaderData, useNavigation } from '@remix-run/react'
 import dayjs from 'dayjs'
 import advancedFormat from 'dayjs/plugin/advancedFormat'
 import React from 'react'
-import { jsonHash, notFound } from 'remix-utils'
+import { jsonHash } from 'remix-utils'
 import invariant from 'tiny-invariant'
 import { z } from 'zod'
+import { FavoriteArticleButton } from '~/components/favorite-article-button'
 import { currentUserId } from '~/lib/auth.server'
 import { db } from '~/lib/db.server'
 import { handleExceptions } from '~/lib/http.server'
@@ -22,6 +23,11 @@ export async function loader({ params, request }: LoaderArgs) {
     async article() {
       return db.article.findUnique({
         include: {
+          _count: {
+            select: {
+              favorited: true,
+            },
+          },
           author: {
             select: {
               name: true,
@@ -108,6 +114,10 @@ export default function ArticleDetails() {
     navigation.state === 'submitting' ||
     (navigation.formMethod === 'POST' && navigation.state === 'loading')
 
+  const favoritedCount = loaderData?.article?._count.favorited || 0
+
+  const hasBeenFavorited = favoritedCount > 0
+
   const pendingComment = {
     id: -1,
     body: navigation.formData?.get('comment')?.toString() || '',
@@ -148,10 +158,15 @@ export default function ArticleDetails() {
               <span className="counter">(10)</span>
             </button>
             &nbsp;&nbsp;
-            <button className="btn btn-sm btn-outline-primary">
-              <i className="ion-heart"></i>
-              &nbsp; Favorite Post <span className="counter">(29)</span>
-            </button>
+            {loaderData.article?.id && (
+              <FavoriteArticleButton
+                articleId={loaderData.article?.id}
+                favoritedCount={favoritedCount}
+                hasBeenFavorited={hasBeenFavorited}
+              >
+                Favorite Post
+              </FavoriteArticleButton>
+            )}
           </div>
         </div>
       </div>

@@ -1,5 +1,5 @@
 import type { Prisma } from '@prisma/client'
-import { DEFAULT_PAGE_LENGTH } from '~/settings'
+import { DEFAULT_PAGE_LENGTH } from '../../../../settings'
 import { prisma } from '../../prisma'
 
 export async function previews({
@@ -19,6 +19,11 @@ export async function previews({
       title: 'desc',
     },
     include: {
+      _count: {
+        select: {
+          favorited: true,
+        },
+      },
       author: {
         select: {
           avatar: true,
