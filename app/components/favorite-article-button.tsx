@@ -4,33 +4,36 @@ import clsx from 'clsx'
 export function FavoriteArticleButton({
   articleId,
   favoritedCount,
-  hasBeenFavorited,
+  isFavorited,
   children,
 }: {
   articleId: number
-  hasBeenFavorited: boolean
+  isFavorited: boolean
   favoritedCount: number
   children?: React.ReactNode
 }) {
   const fetcher = useFetcher()
 
   return (
-    <fetcher.Form
-      style={{ display: 'inline-block' }}
-      method="POST"
-      action={`/api/articles/${articleId}/${
-        hasBeenFavorited ? 'unfavorite' : 'favorite'
-      }`}
+    <button
+      onClick={() => {
+        fetcher.submit(
+          {},
+          {
+            action: `/api/articles/${articleId}/${
+              isFavorited ? 'unfavorite' : 'favorite'
+            }`,
+            method: 'POST',
+          }
+        )
+      }}
+      className={clsx('btn btn-sm', {
+        'btn-outline-primary': !isFavorited,
+        'btn-primary': isFavorited,
+      })}
     >
-      <button
-        className={clsx('btn btn-sm pull-xs-right', {
-          'btn-outline-primary': !hasBeenFavorited,
-          'btn-primary': hasBeenFavorited,
-        })}
-      >
-        <i className="ion-heart"></i> {children}{' '}
-        {children ? `(${favoritedCount})` : favoritedCount}
-      </button>
-    </fetcher.Form>
+      <i className="ion-heart"></i> {children}{' '}
+      {children ? `(${favoritedCount})` : favoritedCount}
+    </button>
   )
 }

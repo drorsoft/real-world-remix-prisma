@@ -19,10 +19,17 @@ export async function loader({ params, request }: LoaderArgs) {
 
   invariant(articleId, 'this route must have and ID param in the definition')
 
+  const userId = await currentUserId(request)
+
   return jsonHash({
     async article() {
       return db.article.findUnique({
         include: {
+          favorited: {
+            select: {
+              id: true,
+            },
+          },
           _count: {
             select: {
               favorited: true,
@@ -60,12 +67,11 @@ export async function loader({ params, request }: LoaderArgs) {
       })
     },
     async currentUser() {
-      const userId = await currentUserId(request)
-
       return db.user.findUnique({
         select: {
           avatar: true,
           name: true,
+          id: true,
         },
         where: {
           id: userId,
@@ -116,7 +122,9 @@ export default function ArticleDetails() {
 
   const favoritedCount = loaderData?.article?._count.favorited || 0
 
-  const hasBeenFavorited = favoritedCount > 0
+  const isFavorited = !!loaderData.article?.favorited.some(
+    ({ id }) => id === loaderData.currentUser?.id
+  )
 
   const pendingComment = {
     id: -1,
@@ -162,7 +170,7 @@ export default function ArticleDetails() {
               <FavoriteArticleButton
                 articleId={loaderData.article?.id}
                 favoritedCount={favoritedCount}
-                hasBeenFavorited={hasBeenFavorited}
+                isFavorited={isFavorited}
               >
                 Favorite Post
               </FavoriteArticleButton>

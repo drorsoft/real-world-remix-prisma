@@ -6,8 +6,14 @@ import { FavoriteArticleButton } from './favorite-article-button'
 
 dayjs.extend(advancedFormat)
 
-export function ArticlePreview({ article }: { article: ArticlePreviewDTO }) {
-  const hasBeenFavorited = article._count.favorited > 0
+export function ArticlePreview({
+  article,
+  userId,
+}: {
+  article: ArticlePreviewDTO
+  userId: number
+}) {
+  const hasBeenFavorited = article.favorited.some(({ id }) => id === userId)
 
   return (
     <div className="article-preview" key={article.id}>
@@ -25,7 +31,7 @@ export function ArticlePreview({ article }: { article: ArticlePreviewDTO }) {
         </div>
         <FavoriteArticleButton
           articleId={article.id}
-          hasBeenFavorited={hasBeenFavorited}
+          isFavorited={hasBeenFavorited}
           favoritedCount={article._count.favorited}
         />
       </div>
