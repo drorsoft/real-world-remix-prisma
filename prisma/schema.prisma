@@ -31,7 +31,7 @@ model Article {
   title       String
   description String
   body        String
-  author      User      @relation(fields: [userId], references: [id])
+  author      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId      Int
   createdAt   DateTime  @default(now())
   tags        Tag[]
@@ -44,9 +44,9 @@ model Comment {
   body      String
   createdAt DateTime @default(now())
   userId    Int
-  author    User     @relation(fields: [userId], references: [id])
+  author    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   articleId Int
-  article   Article  @relation(fields: [articleId], references: [id])
+  article   Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
 }
 
 model Tag {

@@ -8,7 +8,7 @@ export function ErrorMessages({
   return (
     <ul className="error-messages">
       {Object.entries(errors).map(([key, messages]) => (
-        <li key={key}>
+        <li key={key} role="alert" title={`${key} error message`}>
           {key} {Array.isArray(messages) ? messages[0] : messages}
         </li>
       ))}

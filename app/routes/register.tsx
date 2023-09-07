@@ -20,7 +20,10 @@ export async function action({ request }: ActionArgs) {
       .string()
       .min(1, { message: "can't be blank" })
       .min(2, { message: "can't be less than 2 chars" }),
-    email: z.string().min(1, { message: "can't be blank" }).email(),
+    email: z
+      .string()
+      .min(1, { message: "can't be blank" })
+      .email({ message: 'must be valid' }),
     password: z
       .string()
       .min(1, { message: "can't be blank" })
@@ -82,14 +85,15 @@ export default function Register() {
             <p className="text-xs-center">
               <Link to="/login">Have an account?</Link>
             </p>
-            {actionData && <ErrorMessages errors={actionData.errors} />}
-            <Form method="POST">
+            {actionData?.errors && <ErrorMessages errors={actionData.errors} />}
+            <Form method="POST" noValidate>
               <fieldset className="form-group">
                 <input
                   className="form-control form-control-lg"
                   type="text"
                   placeholder="Your Name"
                   name="name"
+                  aria-describedby="name-error"
                 />
               </fieldset>
               <fieldset className="form-group">
@@ -98,6 +102,7 @@ export default function Register() {
                   type="email"
                   placeholder="Email"
                   name="email"
+                  aria-describedby="email-error"
                 />
               </fieldset>
               <fieldset className="form-group">
@@ -106,6 +111,7 @@ export default function Register() {
                   type="password"
                   placeholder="Password"
                   name="password"
+                  aria-describedby="password-error"
                 />
               </fieldset>
               <button className="btn btn-lg btn-primary pull-xs-right">
