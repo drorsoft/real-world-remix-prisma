@@ -1,6 +1,6 @@
 import type { Prisma } from '@prisma/client'
 import { prisma } from './prisma'
-import { DEFAULT_PAGE_LENGTH } from '~/settings'
+import { DEFAULT_PAGE_LENGTH } from '../../settings'
 
 const db = prisma.$extends({
   model: {
@@ -36,6 +36,7 @@ const db = prisma.$extends({
               select: {
                 avatar: true,
                 name: true,
+                id: true,
               },
             },
             tags: {

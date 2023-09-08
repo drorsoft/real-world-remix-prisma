@@ -16,7 +16,9 @@ model User {
   bio       String?
   articles  Article[]
   comments  Comment[]
-  favorites Article[] @relation("favorites")
+  favorites Article[] @relation("Favorites")
+  following User[]    @relation("Follows")
+  followers User[]    @relation("Follows")
 }
 
 model Session {
@@ -36,7 +38,7 @@ model Article {
   createdAt   DateTime  @default(now())
   tags        Tag[]
   comments    Comment[]
-  favorited   User[]    @relation("favorites")
+  favorited   User[]    @relation("Favorites")
 }
 
 model Comment {

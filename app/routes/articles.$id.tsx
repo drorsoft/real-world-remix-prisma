@@ -1,13 +1,14 @@
 import type { Comment, User } from '@prisma/client'
 import { json, type ActionArgs, type LoaderArgs } from '@remix-run/node'
-import { Form, useLoaderData, useNavigation } from '@remix-run/react'
+import { Form, Link, useLoaderData, useNavigation } from '@remix-run/react'
 import dayjs from 'dayjs'
 import advancedFormat from 'dayjs/plugin/advancedFormat'
 import React from 'react'
-import { jsonHash } from 'remix-utils'
+import { jsonHash, notFound } from 'remix-utils'
 import invariant from 'tiny-invariant'
 import { z } from 'zod'
 import { FavoriteArticleButton } from '~/components/favorite-article-button'
+import { FollowUserButton } from '~/components/follow-user-button'
 import { currentUserId } from '~/lib/auth.server'
 import { db } from '~/lib/db.server'
 import { handleExceptions } from '~/lib/http.server'
@@ -23,7 +24,7 @@ export async function loader({ params, request }: LoaderArgs) {
 
   return jsonHash({
     async article() {
-      return db.article.findUnique({
+      const article = await db.article.findUnique({
         include: {
           favorited: {
             select: {
@@ -40,6 +41,7 @@ export async function loader({ params, request }: LoaderArgs) {
               name: true,
               id: true,
               avatar: true,
+              followers: true,
             },
           },
         },
@@ -47,6 +49,22 @@ export async function loader({ params, request }: LoaderArgs) {
           id: Number(articleId),
         },
       })
+
+      if (!article) {
+        throw notFound(`article with and id of ${articleId} can't be found`)
+      }
+
+      const isFollowing = article.author.followers.some(
+        ({ id }) => id === userId
+      )
+
+      return {
+        ...article,
+        author: {
+          ...article.author,
+          isFollowing,
+        },
+      }
     },
     async comments() {
       return db.comment.findMany({
@@ -122,9 +140,11 @@ export default function ArticleDetails() {
 
   const favoritedCount = loaderData?.article?._count.favorited || 0
 
-  const isFavorited = !!loaderData.article?.favorited.some(
+  const isFavorited = !!loaderData.article.favorited.some(
     ({ id }) => id === loaderData.currentUser?.id
   )
+
+  const isAuthor = loaderData.article.author.id === loaderData.currentUser?.id
 
   const pendingComment = {
     id: -1,
@@ -146,34 +166,54 @@ export default function ArticleDetails() {
     <div className="article-page">
       <div className="banner">
         <div className="container">
-          <h1>{loaderData.article?.title}</h1>
+          <h1>{loaderData.article.title}</h1>
 
           <div className="article-meta">
-            <a href="">
-              <img alt="" src={loaderData.article?.author.avatar} />
-            </a>
+            <Link to={`/profiles/${loaderData.article.author.id}`}>
+              <img alt="" src={loaderData.article.author.avatar} />
+            </Link>
             <div className="info">
-              <a href="" className="author">
-                {loaderData.article?.author.name}
-              </a>
+              <Link
+                to={`/profiles/${loaderData.article.author.id}`}
+                className="author"
+              >
+                {loaderData.article.author.name}
+              </Link>
               <span className="date">
-                {dayjs(loaderData.article?.createdAt).format('MMMM Do')}
+                {dayjs(loaderData.article.createdAt).format('MMMM Do')}
               </span>
             </div>
-            <button className="btn btn-sm btn-outline-secondary">
-              <i className="ion-plus-round"></i>
-              &nbsp; Follow {loaderData.article?.author.name}{' '}
-              <span className="counter">(10)</span>
-            </button>
-            &nbsp;&nbsp;
-            {loaderData.article?.id && (
-              <FavoriteArticleButton
-                articleId={loaderData.article?.id}
-                favoritedCount={favoritedCount}
-                isFavorited={isFavorited}
-              >
-                Favorite Post
-              </FavoriteArticleButton>
+            {isAuthor ? (
+              <span>
+                <Link
+                  className="btn btn-outline-secondary btn-sm"
+                  to={`/articles/${loaderData.article.id}/edit`}
+                >
+                  <i className="ion-edit"></i> Edit Article
+                </Link>
+                &nbsp;&nbsp;
+                <button className="btn btn-outline-danger btn-sm">
+                  <i className="ion-trash-a"></i> Delete Article
+                </button>
+              </span>
+            ) : (
+              <span>
+                <FollowUserButton
+                  userId={loaderData.article.author.id}
+                  isFollowing={loaderData.article.author.isFollowing}
+                  userName={loaderData.article.author.name}
+                />
+                &nbsp;&nbsp;
+                {loaderData.article.id && (
+                  <FavoriteArticleButton
+                    articleId={loaderData.article.id}
+                    favoritedCount={favoritedCount}
+                    isFavorited={isFavorited}
+                  >
+                    Favorite Post
+                  </FavoriteArticleButton>
+                )}
+              </span>
             )}
           </div>
         </div>
@@ -182,9 +222,9 @@ export default function ArticleDetails() {
       <div className="container page">
         <div className="row article-content">
           <div className="col-md-12">
-            <p>{loaderData.article?.description}</p>
-            <h2 id="introducing-ionic">{loaderData.article?.title}</h2>
-            <p>{loaderData.article?.body}</p>
+            <p>{loaderData.article.description}</p>
+            <h2 id="introducing-ionic">{loaderData.article.title}</h2>
+            <p>{loaderData.article.body}</p>
           </div>
         </div>
 

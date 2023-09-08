@@ -13,27 +13,31 @@ export function ArticlePreview({
   article: ArticlePreviewDTO
   userId: number
 }) {
+  const isAuthor = article.author.id === userId
   const hasBeenFavorited = article.favorited.some(({ id }) => id === userId)
 
   return (
     <div className="article-preview" key={article.id}>
       <div className="article-meta">
-        <a href="profile.html">
-          <img src={article.author.avatar} />
-        </a>
+        <Link to={`/profiles/${article.author.id}`}>
+          <img src={article.author.avatar} alt="User avatar" />
+        </Link>
         <div className="info">
-          <a href="" className="author">
+          <Link to={`/profiles/${article.author.id}`} className="author">
             {article.author.name}
-          </a>
+          </Link>
           <span className="date">
             {dayjs(article.createdAt).format('MMMM Do')}
           </span>
         </div>
-        <FavoriteArticleButton
-          articleId={article.id}
-          isFavorited={hasBeenFavorited}
-          favoritedCount={article._count.favorited}
-        />
+        {!isAuthor && (
+          <FavoriteArticleButton
+            articleId={article.id}
+            isFavorited={hasBeenFavorited}
+            favoritedCount={article._count.favorited}
+            className="pull-xs-right"
+          />
+        )}
       </div>
       <Link to={`/articles/${article.id}`} className="preview-link">
         <h1>{article.title}</h1>

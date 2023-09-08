@@ -1,6 +1,7 @@
 import type { LinksFunction, LoaderArgs } from '@remix-run/node'
 import type { NavLinkProps } from '@remix-run/react'
 import {
+  Link,
   Links,
   LiveReload,
   Meta,
@@ -53,6 +54,7 @@ export async function loader({ request }: LoaderArgs) {
         select: {
           id: true,
           name: true,
+          avatar: true,
         },
       })
     },
@@ -83,9 +85,9 @@ export default function App() {
       <body>
         <nav className="navbar navbar-light">
           <div className="container">
-            <a className="navbar-brand" href="index.html">
+            <Link to="/" className="navbar-brand">
               conduit
-            </a>
+            </Link>
             <ul className="nav navbar-nav pull-xs-right">
               <li className="nav-item">
                 <NavbarLink to="/">Home</NavbarLink>
@@ -102,14 +104,14 @@ export default function App() {
                     <NavbarLink to="/settings">Settings</NavbarLink>
                   </li>
                   <li className="nav-item">
-                    <a className="nav-link" href="#/@romansandler">
+                    <NavbarLink to={`/profiles/${loaderData.user.id}`}>
                       <img
                         className="user-pic"
-                        src="https://api.realworld.io/images/smiley-cyrus.jpeg"
+                        src={loaderData.user.avatar}
                         alt=""
                       />
                       {loaderData.user?.name}
-                    </a>
+                    </NavbarLink>
                   </li>
                 </>
               ) : (
