@@ -1,6 +1,6 @@
 import { NavLink, useNavigation, useSearchParams } from '@remix-run/react'
 import clsx from 'clsx'
-import { DEFAULT_PAGE_LENGTH } from '~/settings'
+import { DEFAULT_PAGE_LENGTH } from '~/utils/url'
 
 export function Pagination({ totalCount }: { totalCount: number }) {
   const [searchParams] = useSearchParams()

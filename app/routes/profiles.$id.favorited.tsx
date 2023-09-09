@@ -6,9 +6,9 @@ import invariant from 'tiny-invariant'
 import { ArticlePreview } from '~/components/article-preview'
 import { EmptyArticlesListMessage } from '~/components/empty-articles-list-message'
 import { Pagination } from '~/components/pagination'
-import { currentUserId } from '~/lib/auth.server'
+import { requireUserId } from '~/lib/auth.server'
 import { db } from '~/lib/db.server'
-import { paginate } from '~/utils/url.server'
+import { paginate } from '~/utils/url'
 
 export async function loader({ params, request }: LoaderArgs) {
   invariant(params.id, 'profile id must exist in url params')
@@ -25,10 +25,12 @@ export async function loader({ params, request }: LoaderArgs) {
     },
   }
 
+  const userId = await requireUserId(request)
+
   return jsonHash({
-    userId: await currentUserId(request),
+    userId,
     async articles() {
-      return db.article.previews({ where, page })
+      return db.article.previews({ where, page, userId })
     },
     async articlesCount() {
       return db.article.count({ where })
@@ -43,11 +45,7 @@ export default function ProfileArticles() {
     <>
       {loaderData.articles.length === 0 && <EmptyArticlesListMessage />}
       {loaderData.articles.map((article) => (
-        <ArticlePreview
-          userId={loaderData.userId}
-          article={article}
-          key={article.id}
-        />
+        <ArticlePreview article={article} key={article.id} />
       ))}
       <Pagination totalCount={loaderData.articlesCount} />
     </>

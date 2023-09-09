@@ -1,5 +1,6 @@
 import { createSessionStorage } from '@remix-run/node'
 import { db } from './db.server'
+import invariant from 'tiny-invariant'
 
 export type SessionData = {
   userId: number
@@ -9,6 +10,8 @@ export type SessionFlashData = {
   error: string
   success: string
 }
+
+invariant(process.env.SESSION_SECRET, 'session secret is not defined')
 
 const sessionStorage = createSessionStorage<SessionData, SessionFlashData>({
   cookie: {

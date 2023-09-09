@@ -7,7 +7,7 @@ export async function handleExceptions(error: unknown) {
   }
 
   if (error instanceof Response) {
-    throw error
+    return error
   }
 
   return badRequest({ errors: {} })

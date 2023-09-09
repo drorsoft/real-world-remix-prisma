@@ -1,15 +1,15 @@
-import type { Comment, User } from '@prisma/client'
+import { type Comment, type User } from '@prisma/client'
 import { json, type ActionArgs, type LoaderArgs } from '@remix-run/node'
 import { Form, Link, useLoaderData, useNavigation } from '@remix-run/react'
 import dayjs from 'dayjs'
 import advancedFormat from 'dayjs/plugin/advancedFormat'
 import React from 'react'
-import { jsonHash, notFound } from 'remix-utils'
+import { jsonHash } from 'remix-utils'
 import invariant from 'tiny-invariant'
 import { z } from 'zod'
 import { FavoriteArticleButton } from '~/components/favorite-article-button'
 import { FollowUserButton } from '~/components/follow-user-button'
-import { currentUserId } from '~/lib/auth.server'
+import { requireUserId } from '~/lib/auth.server'
 import { db } from '~/lib/db.server'
 import { handleExceptions } from '~/lib/http.server'
 
@@ -20,13 +20,25 @@ export async function loader({ params, request }: LoaderArgs) {
 
   invariant(articleId, 'this route must have and ID param in the definition')
 
-  const userId = await currentUserId(request)
+  const userId = await requireUserId(request)
 
   return jsonHash({
     async article() {
-      const article = await db.article.findUnique({
-        include: {
+      const article = await db.article.findUniqueOrThrow({
+        select: {
+          id: true,
+          body: true,
+          title: true,
+          description: true,
+          createdAt: true,
+          // ideally we would want to use _count twice,
+          // once for total and once to check for the auth user
+          // but that's not something that prisma currently supports
+          // so this is the best way currently
           favorited: {
+            where: {
+              id: userId,
+            },
             select: {
               id: true,
             },
@@ -41,7 +53,15 @@ export async function loader({ params, request }: LoaderArgs) {
               name: true,
               id: true,
               avatar: true,
-              followers: true,
+              _count: {
+                select: {
+                  followers: {
+                    where: {
+                      id: userId,
+                    },
+                  },
+                },
+              },
             },
           },
         },
@@ -50,19 +70,20 @@ export async function loader({ params, request }: LoaderArgs) {
         },
       })
 
-      if (!article) {
-        throw notFound(`article with and id of ${articleId} can't be found`)
-      }
-
-      const isFollowing = article.author.followers.some(
-        ({ id }) => id === userId
-      )
-
       return {
-        ...article,
+        id: article.id,
+        body: article.body,
+        title: article.title,
+        description: article.description,
+        createdAt: article.createdAt,
+        totalFavorites: article._count.favorited,
+        isFavoritedByMe: article.favorited.length > 0,
         author: {
-          ...article.author,
-          isFollowing,
+          isMe: article.author.id === userId,
+          isFollowedByMe: !!article.author._count.followers,
+          id: article.author.id,
+          name: article.author.name,
+          avatar: article.author.avatar,
         },
       }
     },
@@ -74,6 +95,7 @@ export async function loader({ params, request }: LoaderArgs) {
         include: {
           author: {
             select: {
+              id: true,
               avatar: true,
               name: true,
             },
@@ -113,7 +135,7 @@ export async function action({ request, params }: ActionArgs) {
   try {
     const validated = await CommentSchema.parseAsync({ comment })
 
-    const userId = await currentUserId(request)
+    const userId = await requireUserId(request)
 
     await db.comment.create({
       data: {
@@ -138,18 +160,11 @@ export default function ArticleDetails() {
     navigation.state === 'submitting' ||
     (navigation.formMethod === 'POST' && navigation.state === 'loading')
 
-  const favoritedCount = loaderData?.article?._count.favorited || 0
-
-  const isFavorited = !!loaderData.article.favorited.some(
-    ({ id }) => id === loaderData.currentUser?.id
-  )
-
-  const isAuthor = loaderData.article.author.id === loaderData.currentUser?.id
-
   const pendingComment = {
     id: -1,
     body: navigation.formData?.get('comment')?.toString() || '',
     author: {
+      id: -1,
       name: loaderData.currentUser?.name || '',
       avatar: loaderData.currentUser?.avatar || '',
     },
@@ -183,7 +198,7 @@ export default function ArticleDetails() {
                 {dayjs(loaderData.article.createdAt).format('MMMM Do')}
               </span>
             </div>
-            {isAuthor ? (
+            {loaderData.article.author.isMe ? (
               <span>
                 <Link
                   className="btn btn-outline-secondary btn-sm"
@@ -200,15 +215,15 @@ export default function ArticleDetails() {
               <span>
                 <FollowUserButton
                   userId={loaderData.article.author.id}
-                  isFollowing={loaderData.article.author.isFollowing}
+                  isFollowing={loaderData.article.author.isFollowedByMe}
                   userName={loaderData.article.author.name}
                 />
                 &nbsp;&nbsp;
                 {loaderData.article.id && (
                   <FavoriteArticleButton
                     articleId={loaderData.article.id}
-                    favoritedCount={favoritedCount}
-                    isFavorited={isFavorited}
+                    favoritedCount={loaderData.article.totalFavorites}
+                    isFavorited={loaderData.article.isFavoritedByMe}
                   >
                     Favorite Post
                   </FavoriteArticleButton>
@@ -250,7 +265,6 @@ export default function ArticleDetails() {
                 <button className="btn btn-sm btn-primary">Post Comment</button>
               </div>
             </Form>
-
             {isPending && <CommentCard comment={pendingComment} />}
             {loaderData.comments.map((comment) => (
               <CommentCard comment={comment} key={comment.id} />
@@ -263,7 +277,7 @@ export default function ArticleDetails() {
 }
 
 interface CommentWithAuthor extends Pick<Comment, 'id' | 'body'> {
-  author: Pick<User, 'avatar' | 'name'>
+  author: Pick<User, 'avatar' | 'name' | 'id'>
   createdAt: string
 }
 
@@ -274,17 +288,17 @@ function CommentCard({ comment }: { comment: CommentWithAuthor }) {
         <p className="card-text">{comment.body}</p>
       </div>
       <div className="card-footer">
-        <a href="" className="comment-author">
+        <Link to={`/profiles/${comment.author.id}`} className="comment-author">
           <img
             src={comment.author.avatar}
             className="comment-author-img"
             alt=""
           />
-        </a>
+        </Link>
         &nbsp;
-        <a href="" className="comment-author">
+        <Link to={`/profiles/${comment.author.id}`} className="comment-author">
           {comment.author.name}
-        </a>
+        </Link>
         <span className="date-posted">
           {dayjs(comment.createdAt).format('MMMM Do')}
         </span>

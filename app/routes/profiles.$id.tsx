@@ -4,13 +4,13 @@ import clsx from 'clsx'
 import { notFound } from 'remix-utils'
 import invariant from 'tiny-invariant'
 import { FollowUserButton } from '~/components/follow-user-button'
-import { currentUserId } from '~/lib/auth.server'
+import { requireUserId } from '~/lib/auth.server'
 import { db } from '~/lib/db.server'
 
 export async function loader({ request, params }: LoaderArgs) {
   invariant(params.id, 'user id must exist in the params')
 
-  const userId = await currentUserId(request)
+  const userId = await requireUserId(request)
 
   const profileId = Number(params.id)
 

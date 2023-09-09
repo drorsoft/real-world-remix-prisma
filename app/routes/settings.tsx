@@ -4,12 +4,12 @@ import { Form, useActionData, useLoaderData } from '@remix-run/react'
 import { jsonHash } from 'remix-utils'
 import { z } from 'zod'
 import { ErrorMessages } from '~/components/error-messages'
-import { currentUserId } from '~/lib/auth.server'
+import { requireUserId } from '~/lib/auth.server'
 import { db } from '~/lib/db.server'
 import { handleExceptions } from '~/lib/http.server'
 
 export async function loader({ request }: LoaderArgs) {
-  const userId = await currentUserId(request)
+  const userId = await requireUserId(request)
 
   return jsonHash({
     async user() {
@@ -52,7 +52,7 @@ export async function action({ request }: ActionArgs) {
       avatar,
     })
 
-    const userId = await currentUserId(request)
+    const userId = await requireUserId(request)
 
     await db.user.update({ where: { id: userId }, data: validated })
 

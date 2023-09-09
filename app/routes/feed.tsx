@@ -1,4 +1,10 @@
-import { NavLink, Outlet, useLoaderData, useParams } from '@remix-run/react'
+import {
+  Link,
+  NavLink,
+  Outlet,
+  useLoaderData,
+  useParams,
+} from '@remix-run/react'
 import { jsonHash } from 'remix-utils'
 import { db } from '~/lib/db.server'
 import clsx from 'clsx'
@@ -52,7 +58,7 @@ export default function Home() {
                       className={({ isActive }) =>
                         clsx('nav-link', isActive && 'active')
                       }
-                      to={`/feed/${tag}`}
+                      to={`/feed/tags/${tag}`}
                     >
                       # {tag}
                     </NavLink>
@@ -69,13 +75,13 @@ export default function Home() {
 
               <div className="tag-list">
                 {loaderData.popularTags.map((tag) => (
-                  <NavLink
+                  <Link
                     key={tag.id}
-                    to={`/feed/${tag.title}`}
+                    to={`/feed/tags/${tag.title}`}
                     className="tag-pill tag-default"
                   >
                     {tag.title}
-                  </NavLink>
+                  </Link>
                 ))}
               </div>
             </div>

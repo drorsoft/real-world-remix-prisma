@@ -6,16 +6,7 @@ import { FavoriteArticleButton } from './favorite-article-button'
 
 dayjs.extend(advancedFormat)
 
-export function ArticlePreview({
-  article,
-  userId,
-}: {
-  article: ArticlePreviewDTO
-  userId: number
-}) {
-  const isAuthor = article.author.id === userId
-  const hasBeenFavorited = article.favorited.some(({ id }) => id === userId)
-
+export function ArticlePreview({ article }: { article: ArticlePreviewDTO }) {
   return (
     <div className="article-preview" key={article.id}>
       <div className="article-meta">
@@ -30,11 +21,11 @@ export function ArticlePreview({
             {dayjs(article.createdAt).format('MMMM Do')}
           </span>
         </div>
-        {!isAuthor && (
+        {!article.author.isMe && (
           <FavoriteArticleButton
             articleId={article.id}
-            isFavorited={hasBeenFavorited}
-            favoritedCount={article._count.favorited}
+            isFavorited={article.isFavoritedByMe}
+            favoritedCount={article.totalFavorites}
             className="pull-xs-right"
           />
         )}

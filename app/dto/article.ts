@@ -1,11 +1,12 @@
 import type { Article, Tag, User } from '@prisma/client'
 
-export type ArticlePreviewDTO = Omit<Article, 'createdAt'> & {
-  author: Pick<User, 'avatar' | 'name' | 'id'>
+export type ArticlePreviewDTO = Pick<
+  Article,
+  'id' | 'body' | 'description' | 'title'
+> & {
+  author: Pick<User, 'avatar' | 'name' | 'id'> & { isMe: boolean }
   tags: Pick<Tag, 'title'>[]
   createdAt: string
-  favorited: Array<{ id: number }>
-  _count: {
-    favorited: number
-  }
+  totalFavorites: number
+  isFavoritedByMe: boolean
 }

@@ -1,6 +1,6 @@
 import { type ActionArgs, json } from '@remix-run/node'
 import invariant from 'tiny-invariant'
-import { currentUserId } from '~/lib/auth.server'
+import { requireUserId } from '~/lib/auth.server'
 import { db } from '~/lib/db.server'
 import { handleExceptions } from '~/lib/http.server'
 
@@ -17,7 +17,7 @@ export async function action({ request, params }: ActionArgs) {
       data: {
         followers: {
           connect: {
-            id: await currentUserId(request),
+            id: await requireUserId(request),
           },
         },
       },

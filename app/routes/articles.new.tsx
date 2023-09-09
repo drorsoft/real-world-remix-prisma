@@ -1,9 +1,9 @@
-import type { LoaderArgs } from '@remix-run/node'
-import { redirect, type ActionArgs } from '@remix-run/node'
+import { redirect } from '@remix-run/node'
+import type { LoaderArgs, ActionArgs } from '@remix-run/node'
 import { Form, useActionData } from '@remix-run/react'
 import { z } from 'zod'
 import { ErrorMessages } from '~/components/error-messages'
-import { currentUserId, requireLogin } from '~/lib/auth.server'
+import { requireUserId } from '~/lib/auth.server'
 import { db } from '~/lib/db.server'
 import { handleExceptions } from '~/lib/http.server'
 import { addMessage } from '~/lib/messages.server'
@@ -11,7 +11,7 @@ import { useListData } from '@react-stately/data'
 import React from 'react'
 
 export async function loader({ request }: LoaderArgs) {
-  await requireLogin(request)
+  await requireUserId(request)
 
   return null
 }
@@ -39,7 +39,7 @@ export async function action({ request }: ActionArgs) {
       tags,
     })
 
-    const userId = await currentUserId(request)
+    const userId = await requireUserId(request)
 
     const article = await db.article.create({
       data: {

@@ -4,20 +4,22 @@ import { jsonHash } from 'remix-utils'
 import { ArticlePreview } from '~/components/article-preview'
 import { EmptyArticlesListMessage } from '~/components/empty-articles-list-message'
 import { Pagination } from '~/components/pagination'
-import { currentUserId } from '~/lib/auth.server'
+import { requireUserId } from '~/lib/auth.server'
 import { db } from '~/lib/db.server'
-import { paginate } from '~/utils/url.server'
+import { paginate } from '~/utils/url'
 
 export async function loader({ request }: LoaderArgs) {
   const { page } = paginate(request)
 
+  const userId = await requireUserId(request)
+
   return jsonHash({
-    userId: await currentUserId(request),
+    userId,
     async articlesCount() {
       return db.article.count()
     },
     async articles() {
-      return db.article.previews({ page })
+      return db.article.previews({ page, userId })
     },
   })
 }
@@ -29,11 +31,7 @@ export default function GlobalFeed() {
     <>
       {loaderData.articles.length === 0 && <EmptyArticlesListMessage />}
       {loaderData.articles.map((article) => (
-        <ArticlePreview
-          userId={loaderData.userId}
-          key={article.id}
-          article={article}
-        />
+        <ArticlePreview key={article.id} article={article} />
       ))}
       <Pagination totalCount={loaderData.articlesCount} />
     </>

@@ -1,8 +1,7 @@
 import { redirect } from '@remix-run/node'
 import { getSession } from './session.server'
-import { LOGIN_URL } from '~/settings'
 
-export async function requireLogin(request: Request) {
+export async function requireUserId(request: Request) {
   const session = await getSession(request)
 
   const userId = session.get('userId')
@@ -12,10 +11,8 @@ export async function requireLogin(request: Request) {
   const searchParams = new URLSearchParams({ next: url.pathname })
 
   if (!userId) {
-    throw redirect(`${LOGIN_URL}?${searchParams.toString()}`)
+    throw redirect(`/login?${searchParams.toString()}`)
   }
 
   return userId
 }
-
-export const currentUserId = requireLogin
