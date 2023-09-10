@@ -5,9 +5,9 @@ import {
   useLoaderData,
   useParams,
 } from '@remix-run/react'
+import clsx from 'clsx'
 import { jsonHash } from 'remix-utils'
 import { db } from '~/lib/db.server'
-import clsx from 'clsx'
 
 export async function loader() {
   return jsonHash({
@@ -36,7 +36,6 @@ export default function Home() {
           <p>A place to share your knowledge.</p>
         </div>
       </div>
-
       <div className="container page">
         <div className="row">
           <div className="col-md-9">
@@ -68,17 +67,15 @@ export default function Home() {
             </div>
             <Outlet />
           </div>
-
           <div className="col-md-3">
             <div className="sidebar">
               <p>Popular Tags</p>
-
               <div className="tag-list">
                 {loaderData.popularTags.map((tag) => (
                   <Link
+                    className="tag-pill tag-default"
                     key={tag.id}
                     to={`/feed/tags/${tag.title}`}
-                    className="tag-pill tag-default"
                   >
                     {tag.title}
                   </Link>

@@ -1,10 +1,16 @@
 import { redirect } from '@remix-run/node'
 import { getSession } from './session.server'
 
-export async function requireUserId(request: Request) {
+export async function getUserId(request: Request) {
   const session = await getSession(request)
 
   const userId = session.get('userId')
+
+  return userId
+}
+
+export async function requireUserId(request: Request) {
+  const userId = await getUserId(request)
 
   const url = new URL(request.url)
 

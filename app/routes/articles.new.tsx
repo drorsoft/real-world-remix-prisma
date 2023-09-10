@@ -1,14 +1,14 @@
+import { useListData } from '@react-stately/data'
 import { redirect } from '@remix-run/node'
 import type { LoaderArgs, ActionArgs } from '@remix-run/node'
 import { Form, useActionData } from '@remix-run/react'
+import React from 'react'
 import { z } from 'zod'
 import { ErrorMessages } from '~/components/error-messages'
 import { requireUserId } from '~/lib/auth.server'
 import { db } from '~/lib/db.server'
 import { handleExceptions } from '~/lib/http.server'
 import { addMessage } from '~/lib/messages.server'
-import { useListData } from '@react-stately/data'
-import React from 'react'
 
 export async function loader({ request }: LoaderArgs) {
   await requireUserId(request)
@@ -89,26 +89,26 @@ export default function ArticlesNew() {
               <fieldset>
                 <fieldset className="form-group">
                   <input
-                    name="title"
-                    type="text"
                     className="form-control form-control-lg"
+                    name="title"
                     placeholder="Article Title"
+                    type="text"
                   />
                 </fieldset>
                 <fieldset className="form-group">
                   <input
-                    name="description"
-                    type="text"
                     className="form-control"
+                    name="description"
                     placeholder="What's this article about?"
+                    type="text"
                   />
                 </fieldset>
                 <fieldset className="form-group">
                   <textarea
-                    name="body"
                     className="form-control"
-                    rows={8}
+                    name="body"
                     placeholder="Write your article (in markdown)"
+                    rows={8}
                   ></textarea>
                 </fieldset>
                 <TagsField />
@@ -133,25 +133,27 @@ function TagsField() {
   return (
     <fieldset className="form-group">
       <input
-        value={value}
+        className="form-control"
         onChange={(e) => setValue(e.currentTarget.value)}
         onKeyDown={(e) => {
           if (e.key === 'Enter') {
             e.preventDefault()
+
             setValue('')
+
             selectedTags.append({ id: e.currentTarget.value })
           }
         }}
-        className="form-control"
         placeholder="Enter tags"
+        value={value}
       />
       <div className="tag-list">
         {selectedTags.items.map((tag) => (
-          <span key={tag.id} className="tag-default tag-pill">
-            <input value={tag.id} type="hidden" name="tag" />
+          <span className="tag-default tag-pill" key={tag.id}>
+            <input name="tag" type="hidden" value={tag.id} />
             <i
-              onClick={() => selectedTags.remove(tag.id)}
               className="ion-close-round"
+              onClick={() => selectedTags.remove(tag.id)}
             ></i>
             {tag.id}
           </span>

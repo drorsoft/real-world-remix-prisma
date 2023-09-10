@@ -17,6 +17,8 @@ if (process.env.NODE_ENV === 'production') {
   if (!global.__prisma__) {
     global.__prisma__ = new PrismaClient()
   }
+
   prisma = global.__prisma__
+
   prisma.$connect()
 }

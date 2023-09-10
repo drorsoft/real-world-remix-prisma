@@ -12,10 +12,10 @@ import {
   useLoaderData,
 } from '@remix-run/react'
 import clsx from 'clsx'
-import { getSession } from './lib/session.server'
 import React from 'react'
-import { db } from './lib/db.server'
 import { jsonHash } from 'remix-utils'
+import { getUserId } from './lib/auth.server'
+import { db } from './lib/db.server'
 import { getMessages } from './lib/messages.server'
 
 export const links: LinksFunction = () => {
@@ -38,16 +38,14 @@ export const links: LinksFunction = () => {
 }
 
 export async function loader({ request }: LoaderArgs) {
-  const session = await getSession(request)
-
-  const userId = session.get('userId')
+  const userId = await getUserId(request)
 
   return jsonHash({
     async messages() {
       return getMessages(request)
     },
     async user() {
-      if (!userId) return
+      if (!userId) return null
 
       return db.user.findUnique({
         where: { id: userId },
@@ -63,6 +61,7 @@ export async function loader({ request }: LoaderArgs) {
 
 export default function App() {
   const loaderData = useLoaderData<typeof loader>()
+
   const [isFlashMessageVisible, setIsFlashMessageVisible] =
     React.useState(false)
 
@@ -78,14 +77,14 @@ export default function App() {
     <html lang="en">
       <head>
         <meta charSet="utf-8" />
-        <meta name="viewport" content="width=device-width,initial-scale=1" />
+        <meta content="width=device-width,initial-scale=1" name="viewport" />
         <Meta />
         <Links />
       </head>
       <body>
         <nav className="navbar navbar-light">
           <div className="container">
-            <Link to="/" className="navbar-brand">
+            <Link className="navbar-brand" to="/">
               conduit
             </Link>
             <ul className="nav navbar-nav pull-xs-right">
@@ -106,9 +105,9 @@ export default function App() {
                   <li className="nav-item">
                     <NavbarLink to={`/profiles/${loaderData.user.id}`}>
                       <img
+                        alt="user avatar"
                         className="user-pic"
                         src={loaderData.user.avatar}
-                        alt=""
                       />
                       {loaderData.user?.name}
                     </NavbarLink>
@@ -142,7 +141,7 @@ export default function App() {
         <Outlet />
         <footer>
           <div className="container">
-            <a href="/" className="logo-font">
+            <a className="logo-font" href="/">
               conduit
             </a>
             <span className="attribution">

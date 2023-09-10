@@ -1,6 +1,6 @@
 import type { Prisma } from '@prisma/client'
+import { DEFAULT_PAGE_LENGTH } from '../../utils/url'
 import { prisma } from './prisma'
-import { DEFAULT_PAGE_LENGTH } from '~/utils/url'
 
 const db = prisma.$extends({
   model: {

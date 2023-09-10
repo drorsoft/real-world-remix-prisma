@@ -1,6 +1,6 @@
+import { faker } from '@faker-js/faker'
 import type { Page } from '@playwright/test'
 import { test as base, expect } from '@playwright/test'
-import { faker } from '@faker-js/faker'
 
 class HomePage {
   constructor(public readonly page: Page) {}
@@ -45,7 +45,9 @@ class RegisterPage {
 
   async fillRequiredFields() {
     await this.fillName()
+
     await this.fillEmail()
+
     await this.fillPassword()
   }
 
@@ -57,10 +59,12 @@ class RegisterPage {
 const test = base.extend<{ registerPage: RegisterPage; homePage: HomePage }>({
   registerPage: async ({ page }, use) => {
     const registerPage = new RegisterPage(page)
+
     await use(registerPage)
   },
   homePage: async ({ page }, use) => {
     const homePage = new HomePage(page)
+
     await use(homePage)
   },
 })
@@ -121,7 +125,9 @@ test("a guest can't register for an account with an invalid email", async ({
   const email = 'test@test,com'
 
   await page.getByRole('textbox', { name: /Your Name/i }).fill(fullName)
+
   await page.getByRole('textbox', { name: /Email/i }).fill(email)
+
   await page.getByRole('textbox', { name: /Password/i }).fill('Aa123456!')
 
   await page.getByRole('button', { name: /Sign up/i }).click()

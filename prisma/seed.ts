@@ -1,14 +1,16 @@
 import { faker } from '@faker-js/faker'
+
 import { db } from '../app/lib/db.server'
 
 async function seed() {
-  const tables = ['Article', 'Tag', 'User']
+  const tables = ['articles', 'tags', 'users', 'sessions', 'comments']
 
   for (const table of tables) {
     await db.$queryRawUnsafe(`DELETE FROM "${table}"`)
   }
 
   const users = []
+
   const tags = []
 
   for (const _ of Array.from({ length: 10 })) {
@@ -71,6 +73,8 @@ seed()
   })
   .catch(async (e) => {
     console.error(e)
+
     await db.$disconnect()
+
     process.exit(1)
   })

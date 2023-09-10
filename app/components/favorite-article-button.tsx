@@ -18,6 +18,14 @@ export function FavoriteArticleButton({
 
   return (
     <button
+      className={clsx(
+        'btn btn-sm',
+        {
+          'btn-outline-primary': !isFavorited,
+          'btn-primary': isFavorited,
+        },
+        className
+      )}
       onClick={() => {
         fetcher.submit(
           {},
@@ -29,14 +37,6 @@ export function FavoriteArticleButton({
           }
         )
       }}
-      className={clsx(
-        'btn btn-sm',
-        {
-          'btn-outline-primary': !isFavorited,
-          'btn-primary': isFavorited,
-        },
-        className
-      )}
     >
       <i className="ion-heart"></i> {children}{' '}
       {children ? `(${favoritedCount})` : favoritedCount}

@@ -189,8 +189,8 @@ export default function ArticleDetails() {
             </Link>
             <div className="info">
               <Link
-                to={`/profiles/${loaderData.article.author.id}`}
                 className="author"
+                to={`/profiles/${loaderData.article.author.id}`}
               >
                 {loaderData.article.author.name}
               </Link>
@@ -214,8 +214,8 @@ export default function ArticleDetails() {
             ) : (
               <span>
                 <FollowUserButton
-                  userId={loaderData.article.author.id}
                   isFollowing={loaderData.article.author.isFollowedByMe}
+                  userId={loaderData.article.author.id}
                   userName={loaderData.article.author.name}
                 />
                 &nbsp;&nbsp;
@@ -247,20 +247,20 @@ export default function ArticleDetails() {
 
         <div className="row">
           <div className="col-xs-12 col-md-8 offset-md-2">
-            <Form ref={formRef} method="POST" className="card comment-form">
+            <Form className="card comment-form" method="POST" ref={formRef}>
               <div className="card-block">
                 <textarea
                   className="form-control"
+                  name="comment"
                   placeholder="Write a comment..."
                   rows={3}
-                  name="comment"
                 ></textarea>
               </div>
               <div className="card-footer">
                 <img
-                  src={loaderData.currentUser?.avatar}
-                  className="comment-author-img"
                   alt=""
+                  className="comment-author-img"
+                  src={loaderData.currentUser?.avatar}
                 />
                 <button className="btn btn-sm btn-primary">Post Comment</button>
               </div>
@@ -288,15 +288,15 @@ function CommentCard({ comment }: { comment: CommentWithAuthor }) {
         <p className="card-text">{comment.body}</p>
       </div>
       <div className="card-footer">
-        <Link to={`/profiles/${comment.author.id}`} className="comment-author">
+        <Link className="comment-author" to={`/profiles/${comment.author.id}`}>
           <img
-            src={comment.author.avatar}
-            className="comment-author-img"
             alt=""
+            className="comment-author-img"
+            src={comment.author.avatar}
           />
         </Link>
         &nbsp;
-        <Link to={`/profiles/${comment.author.id}`} className="comment-author">
+        <Link className="comment-author" to={`/profiles/${comment.author.id}`}>
           {comment.author.name}
         </Link>
         <span className="date-posted">

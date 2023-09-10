@@ -78,44 +78,44 @@ export default function Settings() {
                 <fieldset className="form-group">
                   <input
                     className="form-control"
-                    type="text"
-                    placeholder="URL of profile picture"
-                    name="avatar"
                     defaultValue={loaderData.user?.avatar}
+                    name="avatar"
+                    placeholder="URL of profile picture"
+                    type="text"
                   />
                 </fieldset>
                 <fieldset className="form-group">
                   <input
                     className="form-control form-control-lg"
-                    type="text"
-                    placeholder="Your Name"
-                    name="name"
                     defaultValue={loaderData.user?.name}
+                    name="name"
+                    placeholder="Your Name"
+                    type="text"
                   />
                 </fieldset>
                 <fieldset className="form-group">
                   <textarea
                     className="form-control form-control-lg"
-                    rows={8}
-                    placeholder="Short bio about you"
-                    name="bio"
                     defaultValue={loaderData.user?.bio || ''}
+                    name="bio"
+                    placeholder="Short bio about you"
+                    rows={8}
                   ></textarea>
                 </fieldset>
                 <fieldset className="form-group">
                   <input
                     className="form-control form-control-lg"
-                    type="email"
-                    placeholder="Email"
-                    name="email"
                     defaultValue={loaderData.user?.email}
+                    name="email"
+                    placeholder="Email"
+                    type="email"
                   />
                 </fieldset>
                 <fieldset className="form-group">
                   <input
                     className="form-control form-control-lg"
-                    type="password"
                     placeholder="Password"
+                    type="password"
                   />
                 </fieldset>
                 <button className="btn btn-lg btn-primary pull-xs-right">
@@ -124,7 +124,7 @@ export default function Settings() {
               </fieldset>
             </Form>
             <hr />
-            <Form method="POST" action="/logout">
+            <Form action="/logout" method="POST">
               <button className="btn btn-outline-danger">
                 Or click here to logout.
               </button>

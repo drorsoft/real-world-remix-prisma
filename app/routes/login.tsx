@@ -1,13 +1,13 @@
 import type { ActionArgs } from '@remix-run/node'
 import { redirect } from '@remix-run/node'
 import { Form, Link, useActionData } from '@remix-run/react'
-import { z } from 'zod'
 import bcrypt from 'bcryptjs'
-import { commitSession, getSession } from '~/lib/session.server'
-import { db } from '~/lib/db.server'
 import { unprocessableEntity } from 'remix-utils'
-import { handleExceptions } from '~/lib/http.server'
+import { z } from 'zod'
 import { ErrorMessages } from '~/components/error-messages'
+import { db } from '~/lib/db.server'
+import { handleExceptions } from '~/lib/http.server'
+import { commitSession, getSession } from '~/lib/session.server'
 
 export async function action({ request }: ActionArgs) {
   const formData = await request.formData()
@@ -84,17 +84,17 @@ export default function Login() {
               <fieldset className="form-group">
                 <input
                   className="form-control form-control-lg"
-                  type="email"
-                  placeholder="Email"
                   name="email"
+                  placeholder="Email"
+                  type="email"
                 />
               </fieldset>
               <fieldset className="form-group">
                 <input
                   className="form-control form-control-lg"
-                  type="password"
-                  placeholder="Password"
                   name="password"
+                  placeholder="Password"
+                  type="password"
                 />
               </fieldset>
               <button className="btn btn-lg btn-primary pull-xs-right">

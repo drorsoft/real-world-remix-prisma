@@ -1,12 +1,12 @@
 import type { ActionArgs } from '@remix-run/node'
 import { redirect } from '@remix-run/node'
 import { Form, Link, useActionData } from '@remix-run/react'
-import { z } from 'zod'
 import bcrypt from 'bcryptjs'
-import { commitSession, getSession } from '~/lib/session.server'
+import { z } from 'zod'
+import { ErrorMessages } from '~/components/error-messages'
 import { db } from '~/lib/db.server'
 import { handleExceptions } from '~/lib/http.server'
-import { ErrorMessages } from '~/components/error-messages'
+import { commitSession, getSession } from '~/lib/session.server'
 
 export async function action({ request }: ActionArgs) {
   const formData = await request.formData()
@@ -14,6 +14,8 @@ export async function action({ request }: ActionArgs) {
   const name = formData.get('name')
   const email = formData.get('email')
   const password = formData.get('password')
+
+  const session = await getSession(request)
 
   const CreateUserSchema = z.object({
     name: z
@@ -35,8 +37,6 @@ export async function action({ request }: ActionArgs) {
       }),
   })
 
-  const session = await getSession(request)
-
   try {
     const validated = await CreateUserSchema.parseAsync({
       name,
@@ -56,7 +56,7 @@ export async function action({ request }: ActionArgs) {
 
     session.flash(
       'success',
-      'You are now successfully registered! Welcome to Conduit'
+      'You are now successfully registered! Welcome to Conduit',
     )
 
     return redirect('/', {
@@ -89,29 +89,29 @@ export default function Register() {
             <Form method="POST" noValidate>
               <fieldset className="form-group">
                 <input
-                  className="form-control form-control-lg"
-                  type="text"
-                  placeholder="Your Name"
-                  name="name"
                   aria-describedby="name-error"
+                  className="form-control form-control-lg"
+                  name="name"
+                  placeholder="Your Name"
+                  type="text"
                 />
               </fieldset>
               <fieldset className="form-group">
                 <input
-                  className="form-control form-control-lg"
-                  type="email"
-                  placeholder="Email"
-                  name="email"
                   aria-describedby="email-error"
+                  className="form-control form-control-lg"
+                  name="email"
+                  placeholder="Email"
+                  type="email"
                 />
               </fieldset>
               <fieldset className="form-group">
                 <input
-                  className="form-control form-control-lg"
-                  type="password"
-                  placeholder="Password"
-                  name="password"
                   aria-describedby="password-error"
+                  className="form-control form-control-lg"
+                  name="password"
+                  placeholder="Password"
+                  type="password"
                 />
               </fieldset>
               <button className="btn btn-lg btn-primary pull-xs-right">

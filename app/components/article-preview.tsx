@@ -1,7 +1,7 @@
-import dayjs from 'dayjs'
-import type { ArticlePreviewDTO } from '~/dto/article'
-import advancedFormat from 'dayjs/plugin/advancedFormat'
 import { Link } from '@remix-run/react'
+import dayjs from 'dayjs'
+import advancedFormat from 'dayjs/plugin/advancedFormat'
+import type { ArticlePreviewDTO } from '~/dto/article'
 import { FavoriteArticleButton } from './favorite-article-button'
 
 dayjs.extend(advancedFormat)
@@ -11,10 +11,10 @@ export function ArticlePreview({ article }: { article: ArticlePreviewDTO }) {
     <div className="article-preview" key={article.id}>
       <div className="article-meta">
         <Link to={`/profiles/${article.author.id}`}>
-          <img src={article.author.avatar} alt="User avatar" />
+          <img alt="User avatar" src={article.author.avatar} />
         </Link>
         <div className="info">
-          <Link to={`/profiles/${article.author.id}`} className="author">
+          <Link className="author" to={`/profiles/${article.author.id}`}>
             {article.author.name}
           </Link>
           <span className="date">
@@ -24,19 +24,19 @@ export function ArticlePreview({ article }: { article: ArticlePreviewDTO }) {
         {!article.author.isMe && (
           <FavoriteArticleButton
             articleId={article.id}
-            isFavorited={article.isFavoritedByMe}
-            favoritedCount={article.totalFavorites}
             className="pull-xs-right"
+            favoritedCount={article.totalFavorites}
+            isFavorited={article.isFavoritedByMe}
           />
         )}
       </div>
-      <Link to={`/articles/${article.id}`} className="preview-link">
+      <Link className="preview-link" to={`/articles/${article.id}`}>
         <h1>{article.title}</h1>
         <p>{article.description}</p>
         <span>Read more...</span>
         <ul className="tag-list">
           {article.tags.map((tag) => (
-            <li key={tag.title} className="tag-default tag-pill tag-outline">
+            <li className="tag-default tag-pill tag-outline" key={tag.title}>
               {tag.title}
             </li>
           ))}

@@ -31,7 +31,7 @@ export default function GlobalFeed() {
     <>
       {loaderData.articles.length === 0 && <EmptyArticlesListMessage />}
       {loaderData.articles.map((article) => (
-        <ArticlePreview key={article.id} article={article} />
+        <ArticlePreview article={article} key={article.id} />
       ))}
       <Pagination totalCount={loaderData.articlesCount} />
     </>

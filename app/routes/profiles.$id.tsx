@@ -40,23 +40,23 @@ export default function Profile() {
           <div className="row">
             <div className="col-xs-12 col-md-10 offset-md-1">
               <img
-                src={loaderData.profile.avatar}
                 alt="user avatar"
                 className="user-img"
+                src={loaderData.profile.avatar}
               />
               <h4>{loaderData.profile.name}</h4>
               <p>{loaderData.profile.bio}</p>
               {loaderData.profile.id !== loaderData.userId && (
                 <FollowUserButton
-                  userId={loaderData.profile.id}
                   isFollowing={loaderData.isFollowing}
+                  userId={loaderData.profile.id}
                   userName={loaderData.profile.name}
                 />
               )}
               {loaderData.profile.id === loaderData.userId && (
                 <Link
-                  to="/settings"
                   className="btn btn-sm btn-outline-secondary action-btn"
+                  to="/settings"
                 >
                   <i className="ion-gear-a"></i>
                   &nbsp; Edit Profile Settings
@@ -77,8 +77,8 @@ export default function Profile() {
                     className={({ isActive }) =>
                       clsx('nav-link', isActive && 'active')
                     }
-                    to=""
                     end
+                    to=""
                   >
                     My Articles
                   </NavLink>

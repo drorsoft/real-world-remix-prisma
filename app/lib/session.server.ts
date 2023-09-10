@@ -1,6 +1,6 @@
 import { createSessionStorage } from '@remix-run/node'
-import { db } from './db.server'
 import invariant from 'tiny-invariant'
+import { db } from './db.server'
 
 export type SessionData = {
   userId: number

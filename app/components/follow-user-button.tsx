@@ -16,6 +16,14 @@ export function FollowUserButton({
 
   return (
     <button
+      className={clsx(
+        'btn btn-sm action-btn',
+        {
+          'btn-outline-secondary': !isFollowing,
+          'btn-secondary': isFollowing,
+        },
+        className
+      )}
       onClick={() => {
         fetcher.submit(
           {},
@@ -27,14 +35,6 @@ export function FollowUserButton({
           }
         )
       }}
-      className={clsx(
-        'btn btn-sm action-btn',
-        {
-          'btn-outline-secondary': !isFollowing,
-          'btn-secondary': isFollowing,
-        },
-        className
-      )}
     >
       <i
         className={clsx(isFollowing ? 'ion-minus-round' : 'ion-plus-round')}

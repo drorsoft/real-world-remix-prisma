@@ -30,9 +30,9 @@ export function Pagination({ totalCount }: { totalCount: number }) {
             >
               <NavLink
                 className="page-link"
-                to={{ search: `?page=${page}` }}
-                preventScrollReset
                 prefetch="intent"
+                preventScrollReset
+                to={{ search: `?page=${page}` }}
               >
                 {page}
               </NavLink>
